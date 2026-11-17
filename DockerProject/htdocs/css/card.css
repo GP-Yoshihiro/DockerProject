@@ -246,18 +246,87 @@ html:not(.js) .summon,
 }
 
 /* ===== 特殊演出（カットイン） ===== */
+/* カットインのカードの番が来たら、裏向きのまま震えて金色に光る（ため） */
+.card.charging .card-flip { animation: charge-shake 0.12s linear infinite; }
+.card.charging .card-back {
+    box-shadow: 0 0 0 3px #ffcf00, 0 0 24px 8px rgba(255, 207, 0, 0.9);
+    animation: charge-glow 0.45s ease-in-out infinite alternate;
+}
+@keyframes charge-shake {
+    0%, 100% { translate: 0 0; }
+    25% { translate: -2px 1px; }
+    50% { translate: 2px -1px; }
+    75% { translate: -1px -1px; }
+}
+@keyframes charge-glow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.5); }
+}
+
 .cutin {
     position: fixed;
     inset: 0;
     z-index: 15;
     display: none;
     overflow: hidden;
-    background: radial-gradient(circle at 70% 50%, #2a1c00 0, #07060f 75%);
+    background: #05050c;
     cursor: pointer;
 }
 .cutin.show { display: block; }
 .cutin.leave { animation: cutin-out 0.45s ease-in forwards; }
 @keyframes cutin-out { to { opacity: 0; transform: scale(1.05); } }
+
+/* --- 1・2段目: 画像の一部を横長の帯で大きく映す（足元 → 顔） --- */
+.cutin-closeup {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 28%;
+    height: 44%;
+    display: none;
+    background-image: var(--cutin-img);
+    background-repeat: no-repeat;
+    background-size: 110% auto;
+    border-top: 3px solid #ffcf00;
+    border-bottom: 3px solid #ffcf00;
+    box-shadow: 0 0 40px rgba(255, 207, 0, 0.45);
+}
+/* 足元: 画像の下のほうを、左からすべり込ませて少しずつ上へ */
+.cutin.stage-feet .cutin-closeup {
+    display: block;
+    animation: cutin-feet 1.3s ease-out forwards;
+}
+@keyframes cutin-feet {
+    from { background-position: 50% 100%; transform: translateX(-12%); opacity: 0; }
+    20%  { opacity: 1; }
+    to   { background-position: 50% 88%; transform: translateX(0); }
+}
+/* 顔: 画像の上のほうを、右からすべり込ませてじわっと寄る */
+.cutin.stage-face .cutin-closeup {
+    display: block;
+    animation: cutin-face 1.3s ease-out forwards;
+}
+@keyframes cutin-face {
+    from { background-position: 50% 6%; background-size: 110% auto; transform: translateX(12%); opacity: 0; }
+    20%  { opacity: 1; }
+    to   { background-position: 50% 10%; background-size: 125% auto; transform: translateX(0); }
+}
+
+/* --- 3段目: 立ち絵全体 --- */
+.cutin-lines,
+.cutin-band,
+.cutin-img,
+.cutin-text,
+.cutin-hint { display: none; }
+.cutin.stage-full {
+    background: radial-gradient(circle at 70% 50%, #2a1c00 0, #07060f 75%);
+}
+.cutin.stage-full .cutin-lines,
+.cutin.stage-full .cutin-band,
+.cutin.stage-full .cutin-img,
+.cutin.stage-full .cutin-text { display: block; }
+.cutin.stage-full .cutin-text { display: flex; }
+.cutin.show .cutin-hint { display: block; }
 
 /* 背景の集中線（横に流れる光の筋） */
 .cutin-lines {
@@ -306,7 +375,6 @@ html:not(.js) .summon,
     position: absolute;
     left: 6%;
     top: 58%;
-    display: flex;
     align-items: center;
     gap: 14px;
     transform: translateY(-50%) translateX(-140%);
@@ -342,6 +410,12 @@ html:not(.js) .summon,
     .cutin-text .rarity-badge { font-size: 1.1rem; }
     .cutin-img { max-width: 85%; height: 70%; }
     .cutin-text { top: 30%; }
+    .cutin-closeup { background-size: 160% auto; }
+    @keyframes cutin-face {
+        from { background-position: 50% 6%; background-size: 160% auto; transform: translateX(12%); opacity: 0; }
+        20%  { opacity: 1; }
+        to   { background-position: 50% 10%; background-size: 180% auto; transform: translateX(0); }
+    }
 }
 
 /* UR を引いたときの画面フラッシュ */

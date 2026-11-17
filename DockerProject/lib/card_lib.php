@@ -48,14 +48,17 @@ function render_card_results(array $results): void
     $max = $results ? max(array_map(fn ($r) => (int)$r['rarity'], $results)) : 1;
 
     // 特殊演出（カットイン）: 結果の中にカットイン画像を持つカードがあれば、レア度が一番高いものを1回だけ流す
+    // そのカードがめくれる直前に流すので、何枚目か（$cutin_index）も覚えておく
     $cutin = null;
-    foreach ($results as $item) {
+    $cutin_index = null;
+    foreach ($results as $i => $item) {
         $file = $item['cutin_image'] ?? null;
         if ($file === null || $file === '' || basename($file) !== $file) {
             continue;
         }
         if ($cutin === null || (int)$item['rarity'] > (int)$cutin['rarity']) {
             $cutin = $item;
+            $cutin_index = $i;
         }
     }
     ?>
@@ -90,11 +93,18 @@ function render_card_results(array $results): void
         <button type="button" class="summon-skip">スキップ</button>
     </div>
     <?php if ($cutin !== null): ?>
-        <?php $cutin_rarity = (int)$cutin['rarity']; ?>
-        <div class="cutin rarity-<?= $cutin_rarity ?>" data-card-id="<?= htmlspecialchars($cutin['card_id']) ?>" aria-hidden="true">
+        <?php
+        $cutin_rarity = (int)$cutin['rarity'];
+        $cutin_url = CARD_IMAGE_DIR . rawurlencode($cutin['cutin_image']);
+        ?>
+        <div class="cutin rarity-<?= $cutin_rarity ?>" data-card-id="<?= htmlspecialchars($cutin['card_id']) ?>" data-index="<?= $cutin_index ?>"
+             style="--cutin-img: url('<?= htmlspecialchars($cutin_url) ?>')" aria-hidden="true">
+            <!-- 1・2段目: 画像の一部（足元 → 顔）を大きく映す -->
+            <div class="cutin-closeup"></div>
+            <!-- 3段目: 立ち絵全体 -->
             <div class="cutin-lines"></div>
             <div class="cutin-band"></div>
-            <img class="cutin-img" src="<?= htmlspecialchars(CARD_IMAGE_DIR . rawurlencode($cutin['cutin_image'])) ?>" alt="">
+            <img class="cutin-img" src="<?= htmlspecialchars($cutin_url) ?>" alt="">
             <div class="cutin-text">
                 <span class="rarity-badge rarity-<?= $cutin_rarity ?>"><?= rarity_label($cutin_rarity) ?></span>
                 <span class="cutin-name"><?= htmlspecialchars($cutin['name']) ?></span>
