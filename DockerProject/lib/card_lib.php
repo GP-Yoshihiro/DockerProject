@@ -15,3 +15,65 @@ function card_image_url(?string $image): string
     }
     return CARD_IMAGE_DIR . rawurlencode($image);
 }
+
+const RARITY_LABELS = [5 => 'UR', 4 => 'SSR', 3 => 'SR', 2 => 'R', 1 => 'N'];
+
+/**
+ * レア度（星の数）を表示用のラベルにする
+ */
+function rarity_label(int $rarity): string
+{
+    return RARITY_LABELS[$rarity] ?? 'N';
+}
+
+/**
+ * 演出を使うページの <head> に入れるスクリプト
+ * 描画より先に html へ js クラスを付けて、カードを最初から裏向きにしておく（表が一瞬見えないように）
+ * 「視差効果を減らす」設定の人には演出をしない
+ */
+function render_reveal_head(): void
+{
+    echo '<script>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("js");</script>' . "\n";
+}
+
+/**
+ * ガチャ結果のカード一覧（と演出用の画面）を出力する
+ *
+ * JavaScript が動く環境では /js/gacha.js が
+ *   「タップして開封」→ 光の演出 → カードを1枚ずつめくる
+ * という演出を行う。JavaScript が無くても結果はそのまま表示される。
+ */
+function render_card_results(array $results): void
+{
+    $max = $results ? max(array_map(fn ($r) => (int)$r['rarity'], $results)) : 1;
+    ?>
+    <div class="card-grid" data-max-rarity="<?= $max ?>">
+        <?php foreach ($results as $i => $item): ?>
+            <?php $rarity = (int)$item['rarity']; ?>
+            <figure class="card rarity-<?= $rarity ?>" data-rarity="<?= $rarity ?>" style="--i: <?= $i ?>">
+                <figcaption><?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?></figcaption>
+                <div class="card-flip">
+                    <div class="card-face card-front">
+                        <img src="<?= htmlspecialchars(card_image_url($item['image'])) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
+                    </div>
+                    <div class="card-face card-back" aria-hidden="true"></div>
+                </div>
+            </figure>
+        <?php endforeach; ?>
+    </div>
+    <p class="result-summary">
+        最高レア: <span class="rarity-badge rarity-<?= $max ?>"><?= rarity_label($max) ?></span>
+        <?= str_repeat('★', $max) ?>
+    </p>
+
+    <div class="summon" data-rarity="<?= $max ?>">
+        <div class="summon-stage">
+            <div class="summon-orb"></div>
+            <p class="summon-text">タップして開封</p>
+        </div>
+        <button type="button" class="summon-skip">スキップ</button>
+    </div>
+    <div class="flash" aria-hidden="true"></div>
+    <script src="/js/gacha.js" defer></script>
+    <?php
+}

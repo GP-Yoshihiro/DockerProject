@@ -18,6 +18,7 @@ $targets = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>強化対象アイテム選択</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>強化対象アイテム選択</h1>

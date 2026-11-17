@@ -51,12 +51,13 @@ foreach (fetch_user_cards($pdo, $user_id) as $card) {
 <head>
     <meta charset="UTF-8">
     <title>チーム編成</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>チーム編成: <?= htmlspecialchars($team['name']) ?></h1>
 
     <?php if ($error !== null): ?>
-        <p><?= htmlspecialchars($error) ?></p>
+        <p class="error"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
 
     <form method="post">

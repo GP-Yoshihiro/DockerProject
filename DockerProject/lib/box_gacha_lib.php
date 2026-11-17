@@ -43,7 +43,7 @@ function init_box(PDO $pdo, int $user_id, int $gacha_id): void
 function fetch_box(PDO $pdo, int $user_id, int $gacha_id): array
 {
     $sql = "
-        SELECT ub.card_id, c.name, c.image, ub.remaining, gi.weight AS initial
+        SELECT ub.card_id, c.name, c.rarity, c.image, ub.remaining, gi.weight AS initial
         FROM user_box_items ub
         JOIN gacha_items gi ON gi.gacha_id = ub.gacha_id AND gi.card_id = ub.card_id
         JOIN cards c ON c.id = ub.card_id
@@ -65,7 +65,7 @@ function fetch_box_for_view(PDO $pdo, int $user_id, int $gacha_id): array
         return $box;
     }
     $stmt = $pdo->prepare("
-        SELECT gi.card_id, c.name, c.image, gi.weight AS remaining, gi.weight AS initial
+        SELECT gi.card_id, c.name, c.rarity, c.image, gi.weight AS remaining, gi.weight AS initial
         FROM gacha_items gi
         JOIN cards c ON c.id = gi.card_id
         WHERE gi.gacha_id = ?
@@ -105,6 +105,7 @@ function execute_box_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count): a
                 $items[] = [
                     'card_id' => $card_id,
                     'name'    => $cards[$card_id]['name'],
+                    'rarity'  => $cards[$card_id]['rarity'],
                     'image'   => $cards[$card_id]['image'],
                     'weight'  => $n,
                 ];

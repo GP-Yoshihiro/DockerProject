@@ -14,7 +14,7 @@ class TeamException extends Exception {}
 function fetch_user_cards(PDO $pdo, int $user_id): array
 {
     $stmt = $pdo->prepare("
-        SELECT uc.id, uc.card_id, c.name, c.image, c.hp, c.atk, c.def, uc.created_at
+        SELECT uc.id, uc.card_id, c.name, c.rarity, c.image, c.hp, c.atk, c.def, uc.created_at
         FROM user_cards uc
         JOIN cards c ON c.id = uc.card_id
         WHERE uc.user_id = ?
@@ -40,7 +40,7 @@ function find_user_team(PDO $pdo, int $user_id, int $team_id): ?array
 function fetch_team_members(PDO $pdo, int $team_id): array
 {
     $stmt = $pdo->prepare("
-        SELECT tm.position, uc.id AS user_card_id, c.name, c.image, c.hp, c.atk, c.def
+        SELECT tm.position, uc.id AS user_card_id, c.name, c.rarity, c.image, c.hp, c.atk, c.def
         FROM user_team_members tm
         JOIN user_cards uc ON uc.id = tm.user_card_id
         JOIN cards c ON c.id = uc.card_id

@@ -12,13 +12,14 @@ $teams = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>チーム一覧</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <h1>チーム一覧</h1>
 
     <?php if (isset($_GET['saved'])): ?>
-        <p>チーム編成を保存しました。</p>
+        <p class="notice">チーム編成を保存しました。</p>
     <?php endif; ?>
 
     <?php foreach ($teams as $team): ?>

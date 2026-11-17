@@ -17,6 +17,7 @@ foreach ($cards as $card) {
 <head>
     <meta charset="UTF-8">
     <title>所持カード一覧</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>

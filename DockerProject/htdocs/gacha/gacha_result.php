@@ -28,23 +28,19 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>ガチャ結果</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/card.css">
+    <?php render_reveal_head(); ?>
 </head>
 <body>
     <?php if ($error !== null): ?>
-        <p><?= htmlspecialchars($error) ?></p>
+        <h1>ガチャ結果</h1>
+        <p class="error"><?= htmlspecialchars($error) ?></p>
     <?php else: ?>
-        ガチャ結果<br>
-        <div class="card-grid">
-            <?php foreach ($results as $item): ?>
-                <figure>
-                    <figcaption><?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?></figcaption>
-                    <img src="<?= htmlspecialchars(card_image_url($item['image'])) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
-                </figure>
-            <?php endforeach; ?>
-        </div>
+        <h1>ガチャ結果</h1>
+        <?php render_card_results($results); ?>
         <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
-    <a href="gacha_form.html">戻る</a>
+    <p><a href="gacha_form.html">戻る</a></p>
 </body>
 </html>

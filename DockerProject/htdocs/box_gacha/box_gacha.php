@@ -28,6 +28,7 @@ $total = array_sum(array_column($box, 'initial'));
 <head>
     <meta charset="UTF-8">
     <title>ボックスガチャ</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
@@ -35,7 +36,7 @@ $total = array_sum(array_column($box, 'initial'));
     <p>当たったアイテムは箱から減っていきます。箱を引き切ると、中身がすべて手に入ります。</p>
 
     <?php if ($message !== null): ?>
-        <p><?= htmlspecialchars($message) ?></p>
+        <p class="notice"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
     <p>ボックスの残り: <?= htmlspecialchars($left) ?> / <?= htmlspecialchars($total) ?></p>

@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>ガチャシミュレーション</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>ガチャシミュレーション</h1>
-    <form action="gacha_result.php" method="post">
+    <form class="gacha-panel" action="gacha_result.php" method="post">
         <p>
             <label>
                 ガチャ:
@@ -17,9 +18,12 @@
                 </select>
             </label>
         </p>
-        <button type="submit">10連ガチャ実行</button>
+        <button type="submit" class="btn-gacha">10連ガチャ実行</button>
     </form>
-    <p><a href="gacha_total_count.php">結果集計</a></p>
-    <p><a href="gacha_stats.php">排出率の集計（確率の収束確認）</a></p>
+    <p class="links">
+        <a href="gacha_total_count.php">結果集計</a>
+        <a href="gacha_stats.php">排出率の集計（確率の収束確認）</a>
+        <a href="../">メニュー</a>
+    </p>
 </body>
 </html>

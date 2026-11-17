@@ -75,6 +75,7 @@ $total = array_sum(array_column($rows, 'draw_count'));
 <head>
     <meta charset="UTF-8">
     <title>排出率の集計</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>排出率の集計</h1>
@@ -91,7 +92,7 @@ $total = array_sum(array_column($rows, 'draw_count'));
     </form>
 
     <?php if ($message !== null): ?>
-        <p><?= htmlspecialchars($message) ?></p>
+        <p class="notice"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
     <p>総排出数: <?= htmlspecialchars($total) ?></p>

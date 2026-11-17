@@ -1,25 +1,251 @@
-/* ガチャ結果: 2列でカードを並べる */
+/* ===== ガチャ結果: 2列でカードを並べる ===== */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(2, 160px);
-    gap: 12px 24px;
+    grid-template-columns: repeat(2, 170px);
+    gap: 16px 32px;
     margin: 8px 0 16px 24px;
 }
 .card-grid figure {
     margin: 0;
     text-align: center;
+    perspective: 900px;
 }
 .card-grid figcaption {
     margin-bottom: 4px;
-}
-.card-grid img {
-    width: 90px;
-    height: 120px;
+    font-weight: bold;
+    transition: opacity 0.4s;
 }
 
-/* 一覧表の中の小さい画像 */
+/* カード（表と裏） */
+.card-flip {
+    position: relative;
+    width: 120px;
+    height: 160px;
+    margin: 0 auto;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+.card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    backface-visibility: hidden;
+}
+.card-front img {
+    display: block;
+    width: 120px;
+    height: 160px;
+    border-radius: 10px;
+}
+.card-back {
+    transform: rotateY(180deg);
+    border: 4px solid #2e3a66;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.35) 0 18px, transparent 19px),
+        repeating-linear-gradient(45deg, #4a63ff 0 8px, #3b50d6 8px 16px);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+/* 裏向き（演出中）: <head> のスクリプトで html に js クラスが付いたときだけ、最初は全部裏向き */
+html.js .card:not(.revealed) .card-flip { transform: rotateY(180deg); }
+html.js .card:not(.revealed) figcaption { opacity: 0; }
+
+/* めくれた瞬間に少し跳ねる */
+.revealed .card-flip { animation: pop 0.5s ease-out; }
+@keyframes pop {
+    0% { scale: 1; }
+    50% { scale: 1.08; }
+    100% { scale: 1; }
+}
+
+/* レア度ごとの光り方 */
+.rarity-3 .card-front { box-shadow: 0 0 10px 2px rgba(58, 134, 255, 0.55); }
+.rarity-4 .card-front { box-shadow: 0 0 14px 4px rgba(155, 93, 229, 0.7); }
+.rarity-5 .card-front {
+    box-shadow: 0 0 18px 6px rgba(255, 196, 0, 0.85);
+    animation: rainbow 2.4s linear infinite;
+}
+@keyframes rainbow {
+    0%   { box-shadow: 0 0 18px 6px rgba(255, 80, 80, 0.85); }
+    25%  { box-shadow: 0 0 18px 6px rgba(255, 210, 0, 0.85); }
+    50%  { box-shadow: 0 0 18px 6px rgba(60, 220, 120, 0.85); }
+    75%  { box-shadow: 0 0 18px 6px rgba(80, 140, 255, 0.85); }
+    100% { box-shadow: 0 0 18px 6px rgba(255, 80, 80, 0.85); }
+}
+/* 演出中の裏向きカードは光らせない */
+html.js .card:not(.revealed) .card-front { animation: none; box-shadow: none; }
+
+/* キラキラ（SSR 以上） */
+.sparkle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px 3px #ffe066;
+    pointer-events: none;
+    animation: sparkle 0.9s ease-out forwards;
+}
+@keyframes sparkle {
+    from { transform: translate(0, 0) scale(1); opacity: 1; }
+    to   { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+/* 最高レアの表示（全部めくり終わってから） */
+.result-summary {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #c99400;
+}
+html.js body:not(.reveal-done) .result-summary { visibility: hidden; }
+
+.rarity-badge {
+    display: inline-block;
+    padding: 0 10px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.95rem;
+}
+.rarity-badge.rarity-5 { background: linear-gradient(90deg, #ff5a5a, #ffcf00, #3cdc78, #508cff); }
+.rarity-badge.rarity-4 { background: #8a4dff; }
+.rarity-badge.rarity-3 { background: #3a86ff; }
+.rarity-badge.rarity-2 { background: #52b788; }
+.rarity-badge.rarity-1 { background: #8d8d8d; }
+
+/* ===== 開封の演出（画面全体） ===== */
+.summon {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 45%, #1e2550 0, #070914 70%);
+}
+/* JavaScript が無い／動きを減らす設定のときは出さない */
+html:not(.js) .summon,
+.summon.closed { display: none; }
+.summon-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    cursor: pointer;
+}
+.summon-orb {
+    --orb: #7c8cff;
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #ffffff 0, #b8c4ff 35%, #5b6cff 70%, rgba(91, 108, 255, 0) 72%);
+    animation: float 2s ease-in-out infinite;
+}
+/* 玉のまわりの光（ぼかしの box-shadow は拡大するとカクカクになるので、グラデーションで描く） */
+.summon-orb::after {
+    content: "";
+    position: absolute;
+    inset: -60px;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--orb) 0, rgba(0, 0, 0, 0) 68%);
+    opacity: 0.55;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.05); }
+}
+.summon-text {
+    margin: 0;
+    color: #fff;
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 10px rgba(160, 180, 255, 0.9);
+    animation: blink 1.6s ease-in-out infinite;
+}
+@keyframes blink { 50% { opacity: 0.4; } }
+
+/* タップ後: 最高レアの色に変わって大きくなり、弾ける
+   （背景のグラデーションはアニメーションで滑らかに変化しないので、色はクラスで一気に切り替え、
+     動きは transform と opacity だけで付ける） */
+.summon[data-rarity="1"] .summon-orb, .summon[data-rarity="2"] .summon-orb { --orb: #ffffff; }
+.summon[data-rarity="3"] .summon-orb { --orb: #3a86ff; }
+.summon[data-rarity="4"] .summon-orb { --orb: #a259ff; }
+.summon[data-rarity="5"] .summon-orb { --orb: #ffcf00; }
+.summon.opening .summon-orb {
+    background: radial-gradient(circle, #ffffff 0, #ffffff 25%, var(--orb) 60%, rgba(0, 0, 0, 0) 72%);
+    animation: charge 1.2s ease-in forwards;
+}
+.summon.opening .summon-orb::after { opacity: 0.9; }
+.summon.opening[data-rarity="5"] .summon-orb { animation: charge-ur 1.7s ease-in forwards; }
+@keyframes charge {
+    0%   { transform: scale(1); }
+    25%  { transform: scale(1.2) rotate(-4deg); }
+    40%  { transform: scale(1.15) rotate(4deg); }
+    65%  { transform: scale(1.7); opacity: 1; }
+    100% { transform: scale(14); opacity: 0; }
+}
+@keyframes charge-ur {
+    0%   { transform: scale(1); }
+    20%  { transform: scale(1.25) rotate(-6deg); }
+    35%  { transform: scale(1.2) rotate(6deg); }
+    50%  { transform: scale(1.35) rotate(-6deg); }
+    75%  { transform: scale(2); opacity: 1; }
+    100% { transform: scale(16); opacity: 0; }
+}
+/* UR のときだけ、玉のまわりを虹色の輪が回る（中心はマスクでくり抜いて玉を隠さない） */
+.summon-orb::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    border-radius: 50%;
+    background: conic-gradient(#ff5a5a, #ffcf00, #3cdc78, #36c5ff, #8a4dff, #ff5ad1, #ff5a5a);
+    -webkit-mask: radial-gradient(circle, transparent 66%, #000 68%, #000 100%);
+    mask: radial-gradient(circle, transparent 66%, #000 68%, #000 100%);
+    opacity: 0;
+}
+.summon.opening[data-rarity="5"] .summon-orb::before {
+    opacity: 1;
+    animation: spin 0.5s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.summon.opening .summon-text { animation: none; font-size: 1.6rem; }
+.summon.opening .summon-stage { cursor: default; }
+
+.summon-skip {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+}
+
+/* UR を引いたときの画面フラッシュ */
+.flash {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+.flash.on { animation: flash 0.7s ease-out; }
+@keyframes flash {
+    0% { opacity: 0.9; }
+    100% { opacity: 0; }
+}
+
+/* ===== 一覧表の中の小さい画像 ===== */
 .card-thumb {
     width: 36px;
     height: 48px;
+    border-radius: 4px;
     vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-flip, .revealed .card-flip, .rarity-5 .card-front, .summon-orb { animation: none; transition: none; }
 }

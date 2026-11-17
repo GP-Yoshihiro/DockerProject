@@ -21,9 +21,8 @@ $total = array_sum(array_column($rows, 'count'));
 <head>
     <meta charset="UTF-8">
     <title>ガチャ結果 集計レポート</title>
+    <link rel="stylesheet" href="/css/style.css">
     <style>
-        table { border-collapse: collapse; }
-        th, td { border: 1px solid #999; padding: 2px 4px; }
         td.num { text-align: right; }
     </style>
 </head>

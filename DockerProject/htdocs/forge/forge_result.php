@@ -55,6 +55,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>強化結果</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>強化成功!</h1>

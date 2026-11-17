@@ -22,6 +22,7 @@ $materials = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>素材アイテムインスタンス選択</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>素材アイテムインスタンス選択 (アイテムID: <?= htmlspecialchars($card_id) ?>)</h1>

@@ -1,0 +1,153 @@
+/* サイト全体の共通スタイル */
+:root {
+    --bg: #f3f5fb;
+    --panel: #ffffff;
+    --text: #1f2430;
+    --muted: #5b6475;
+    --border: #dde2ee;
+    --head: #eef1f9;
+    --accent: #4a63ff;
+    --accent-2: #8a4dff;
+    --danger: #d64545;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0 auto;
+    max-width: 900px;
+    padding: 24px 16px 48px;
+    background:
+        radial-gradient(circle at 10% 0%, #e6ebff 0, transparent 40%),
+        radial-gradient(circle at 90% 10%, #f3e8ff 0, transparent 35%),
+        var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+    line-height: 1.7;
+}
+
+h1 {
+    margin: 0 0 20px;
+    padding-left: 12px;
+    border-left: 6px solid var(--accent);
+    font-size: 1.7rem;
+    line-height: 1.3;
+}
+
+h2 {
+    margin: 28px 0 10px;
+    font-size: 1.2rem;
+}
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+/* 表 */
+table {
+    border-collapse: collapse;
+    background: var(--panel);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(20, 30, 60, 0.08);
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+}
+th {
+    background: var(--head);
+    font-weight: bold;
+}
+tr:hover td { background: #f8f9fe; }
+
+/* ボタン・入力欄 */
+button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(74, 99, 255, 0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(74, 99, 255, 0.4); }
+button:active { transform: translateY(1px); }
+button:disabled {
+    background: #b9bfcc;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+select, input[type="number"] {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+}
+
+/* メニュー（トップページ） */
+.menu ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 0;
+    list-style: none;
+}
+.menu li a {
+    display: block;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(20, 30, 60, 0.06);
+    transition: transform 0.15s, border-color 0.15s;
+}
+.menu li a:hover { transform: translateY(-2px); border-color: var(--accent); }
+
+/* ガチャ画面 */
+.gacha-panel {
+    padding: 24px;
+    border-radius: 16px;
+    background: var(--panel);
+    box-shadow: 0 4px 16px rgba(20, 30, 60, 0.08);
+    text-align: center;
+}
+.btn-gacha {
+    margin-top: 8px;
+    padding: 14px 40px;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, #ff7a18, #ff3d77 50%, #8a4dff);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 61, 119, 0.5); }
+    50% { box-shadow: 0 0 0 12px rgba(255, 61, 119, 0); }
+}
+.links { margin-top: 20px; }
+.links a { margin-right: 16px; }
+
+/* メッセージ */
+.notice {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #eaf3ff;
+    border: 1px solid #c8defc;
+}
+.error {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #fdecec;
+    border: 1px solid #f5c2c2;
+    color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-gacha { animation: none; }
+}
