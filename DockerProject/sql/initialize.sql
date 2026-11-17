@@ -55,11 +55,11 @@ INSERT INTO users (id, name) VALUES (1, 'テストユーザー');
 
 -- マスタデータ
 INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image) VALUES 
-(1, '神レアアイテム', NULL, 500, 100, 100, 5, 'Mary.png'),
-(2, '超レアアイテム', 1, 300, 50, 50, 4, 'Mika.png'),
-(3, 'レアアイテム', 2, 200, 30, 30, 3, 'kisaki.png'),
-(4, '普通のアイテム', NULL, 150, 20, 20, 2, 'kei.png'),
-(5, 'ガラクタ', NULL, 100, 10, 10, 1, 'kazusa.png');
+(1, 'マリー', NULL, 500, 100, 100, 5, 'Mary.png'),
+(2, 'ミカ', 1, 300, 50, 50, 4, 'Mika.png'),
+(3, 'キサキ', 2, 200, 30, 30, 3, 'kisaki.png'),
+(4, 'ケイ', NULL, 150, 20, 20, 2, 'kei.png'),
+(5, 'カズサ', NULL, 100, 10, 10, 1, 'kazusa.png');
 
 -- 所持カードデータ
 INSERT INTO user_cards (user_id, card_id) VALUES 
@@ -121,7 +121,7 @@ CREATE TABLE gacha_histories (
 -- ガチャマスタデータ
 INSERT INTO gachas (id, name, type, start_at, end_at) VALUES
 (1, '通常ガチャ', 'normal', '2026-01-01 00:00:00', NULL),
-(2, '期間限定ガチャ（神レア確率アップ）', 'normal', '2026-11-01 00:00:00', '2026-12-31 23:59:59'),
+(2, '期間限定ガチャ（UR確率アップ）', 'normal', '2026-11-01 00:00:00', '2026-12-31 23:59:59'),
 (3, '終了済みガチャ', 'normal', '2026-01-01 00:00:00', '2026-01-31 23:59:59'),
 (4, 'ボックスガチャ', 'box', '2026-01-01 00:00:00', NULL);
 

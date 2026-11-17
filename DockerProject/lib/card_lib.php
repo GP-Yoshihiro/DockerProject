@@ -50,14 +50,18 @@ function render_card_results(array $results): void
     <div class="card-grid" data-max-rarity="<?= $max ?>">
         <?php foreach ($results as $i => $item): ?>
             <?php $rarity = (int)$item['rarity']; ?>
-            <figure class="card rarity-<?= $rarity ?>" data-rarity="<?= $rarity ?>" style="--i: <?= $i ?>">
-                <figcaption><?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?></figcaption>
+            <figure class="card rarity-<?= $rarity ?>" data-rarity="<?= $rarity ?>" data-card-id="<?= htmlspecialchars($item['card_id']) ?>" style="--i: <?= $i ?>">
                 <div class="card-flip">
                     <div class="card-face card-front">
                         <img src="<?= htmlspecialchars(card_image_url($item['image'])) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
                     </div>
                     <div class="card-face card-back" aria-hidden="true"></div>
                 </div>
+                <!-- 画像の下にレア度とカード名 -->
+                <figcaption>
+                    <span class="rarity-badge rarity-<?= $rarity ?>"><?= rarity_label($rarity) ?></span>
+                    <span class="card-name"><?= htmlspecialchars($item['name']) ?></span>
+                </figcaption>
             </figure>
         <?php endforeach; ?>
     </div>
