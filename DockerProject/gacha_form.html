@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ガチャシミュレーション</title>
+</head>
+<body>
+    <h1>ガチャシミュレーション</h1>
+    <form action="gacha_result.php" method="post">
+        <p>
+            <label>
+                ガチャ:
+                <select name="gacha_id">
+                    <option value="1">通常ガチャ</option>
+                    <option value="2">期間限定ガチャ（神レア確率アップ）</option>
+                    <option value="3">終了済みガチャ（期間外の確認用）</option>
+                </select>
+            </label>
+        </p>
+        <button type="submit">10連ガチャ実行</button>
+    </form>
+    <p><a href="gacha_stats.php">排出率の集計（確率の収束確認）</a></p>
+</body>
+</html>
