@@ -36,6 +36,9 @@
     width: 120px;
     height: 160px;
     border-radius: 10px;
+    /* 正方形のアイコンなど縦横比が違う画像でも、伸びずに枠いっぱいに表示する */
+    object-fit: cover;
+    background: #e9ecf5;
 }
 .card-back {
     transform: rotateY(180deg);
@@ -243,6 +246,7 @@ html:not(.js) .summon,
     width: 36px;
     height: 48px;
     border-radius: 4px;
+    object-fit: cover;
     vertical-align: middle;
 }
 

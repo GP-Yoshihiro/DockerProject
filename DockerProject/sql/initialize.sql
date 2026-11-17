@@ -32,6 +32,7 @@ CREATE TABLE cards (
     -- レア度（星の数）: 5 = 最高レア … 1 = 最低。ガチャ結果の演出（光り方）に使う
     rarity TINYINT UNSIGNED NOT NULL DEFAULT 1,
     -- 画像ファイル名（htdocs/images/cards/ 内のファイル）。NULL のときは画像なし
+    -- ※ サーバー（Linux）では大文字・小文字が区別されるので、ファイル名は正確に合わせること
     -- フォルダのパスはPHP側（lib/card_lib.php）で付けるので、置き場所を変えてもDBは直さなくてよい
     image VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -54,11 +55,11 @@ INSERT INTO users (id, name) VALUES (1, 'テストユーザー');
 
 -- マスタデータ
 INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image) VALUES 
-(1, '神レアアイテム', NULL, 500, 100, 100, 5, 'chara_1.svg'),
-(2, '超レアアイテム', 1, 300, 50, 50, 4, 'chara_2.svg'),
-(3, 'レアアイテム', 2, 200, 30, 30, 3, 'chara_3.svg'),
-(4, '普通のアイテム', NULL, 150, 20, 20, 2, 'chara_4.svg'),
-(5, 'ガラクタ', NULL, 100, 10, 10, 1, 'chara_5.svg');
+(1, '神レアアイテム', NULL, 500, 100, 100, 5, 'Mary.png'),
+(2, '超レアアイテム', 1, 300, 50, 50, 4, 'Mika.png'),
+(3, 'レアアイテム', 2, 200, 30, 30, 3, 'kisaki.png'),
+(4, '普通のアイテム', NULL, 150, 20, 20, 2, 'kei.png'),
+(5, 'ガラクタ', NULL, 100, 10, 10, 1, 'kazusa.png');
 
 -- 所持カードデータ
 INSERT INTO user_cards (user_id, card_id) VALUES 
