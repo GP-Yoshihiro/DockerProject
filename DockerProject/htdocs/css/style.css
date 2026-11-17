@@ -130,6 +130,38 @@ select, input[type="number"] {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255, 61, 119, 0.5); }
     50% { box-shadow: 0 0 0 12px rgba(255, 61, 119, 0); }
 }
+.gacha-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+.btn-gacha.btn-single {
+    background: linear-gradient(135deg, #4a63ff, #36c5ff);
+    animation: none;
+}
+
+/* 結果画面の「もう1回」「もう10連」 */
+.retry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0;
+}
+.btn-retry {
+    padding: 10px 24px;
+    font-size: 1rem;
+}
+.btn-retry-main {
+    background: linear-gradient(135deg, #ff7a18, #ff3d77 50%, #8a4dff);
+}
+
+/* 送信中（二度押し防止） */
+form.submitting button {
+    opacity: 0.6;
+    cursor: progress;
+}
+
 .links { margin-top: 20px; }
 .links a { margin-right: 16px; }
 

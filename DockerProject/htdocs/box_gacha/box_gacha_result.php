@@ -50,6 +50,14 @@ $total = array_sum(array_column($box, 'initial'));
         <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
     <p>ボックスの残り: <?= htmlspecialchars($left) ?> / <?= htmlspecialchars($total) ?></p>
+
+    <!-- 続けて引く（残りが足りないボタンは押せない） -->
+    <form class="retry" action="box_gacha_result.php" method="post">
+        <button type="submit" name="count" value="1" class="btn-retry" <?= $left < 1 ? 'disabled' : '' ?>>もう1回（単発）</button>
+        <button type="submit" name="count" value="<?= GACHA_DRAW_COUNT ?>" class="btn-retry btn-retry-main" <?= $left < GACHA_DRAW_COUNT ? 'disabled' : '' ?>>もう<?= GACHA_DRAW_COUNT ?>連</button>
+    </form>
+
     <p><a href="box_gacha.php">戻る</a></p>
+    <script src="/js/submit-once.js" defer></script>
 </body>
 </html>

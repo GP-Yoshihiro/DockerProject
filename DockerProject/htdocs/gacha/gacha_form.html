@@ -18,12 +18,16 @@
                 </select>
             </label>
         </p>
-        <button type="submit" class="btn-gacha">10連ガチャ実行</button>
+        <div class="gacha-buttons">
+            <button type="submit" name="count" value="1" class="btn-gacha btn-single">単発ガチャ実行</button>
+            <button type="submit" name="count" value="10" class="btn-gacha">10連ガチャ実行</button>
+        </div>
     </form>
     <p class="links">
         <a href="gacha_total_count.php">結果集計</a>
         <a href="gacha_stats.php">排出率の集計（確率の収束確認）</a>
         <a href="../">メニュー</a>
     </p>
+    <script src="/js/submit-once.js" defer></script>
 </body>
 </html>

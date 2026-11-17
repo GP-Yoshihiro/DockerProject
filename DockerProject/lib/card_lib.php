@@ -47,7 +47,7 @@ function render_card_results(array $results): void
 {
     $max = $results ? max(array_map(fn ($r) => (int)$r['rarity'], $results)) : 1;
     ?>
-    <div class="card-grid" data-max-rarity="<?= $max ?>">
+    <div class="card-grid<?= count($results) === 1 ? ' single' : '' ?>" data-max-rarity="<?= $max ?>">
         <?php foreach ($results as $i => $item): ?>
             <?php $rarity = (int)$item['rarity']; ?>
             <figure class="card rarity-<?= $rarity ?>" data-rarity="<?= $rarity ?>" data-card-id="<?= htmlspecialchars($item['card_id']) ?>" style="--i: <?= $i ?>">

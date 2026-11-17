@@ -69,5 +69,6 @@ $total = array_sum(array_column($box, 'initial'));
     </form>
 
     <p><a href="../">メニューに戻る</a></p>
+    <script src="/js/submit-once.js" defer></script>
 </body>
 </html>

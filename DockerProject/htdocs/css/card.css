@@ -26,6 +26,13 @@
     font-size: 0.75rem;
 }
 
+/* 単発のときは1枚を中央に、少し大きく */
+.card-grid.single {
+    grid-template-columns: 180px;
+    justify-content: center;
+}
+.card-grid.single .card-flip { max-width: 180px; }
+
 /* カード（表と裏） */
 .card-flip {
     position: relative;
