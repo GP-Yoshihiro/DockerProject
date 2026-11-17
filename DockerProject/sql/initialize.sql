@@ -5,6 +5,9 @@ USE soshage_db;
 -- 接続文字コードを明示
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS user_team_members;
+DROP TABLE IF EXISTS user_teams;
+DROP TABLE IF EXISTS user_box_items;
 DROP TABLE IF EXISTS gacha_histories;
 DROP TABLE IF EXISTS gacha_items;
 DROP TABLE IF EXISTS gachas;
@@ -34,6 +37,9 @@ CREATE TABLE user_cards (
     user_id INT NOT NULL,
     card_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- 「あるユーザーの、あるカードの所持分」を探す用（強化画面の WHERE user_id = ? AND card_id = ?）
+    -- user_id だけで検索する場合（所持カード一覧・チーム編成）にも左端の列として使われる
+    INDEX idx_user_card (user_id, card_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (card_id) REFERENCES cards(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -63,15 +69,18 @@ INSERT INTO user_cards (user_id, card_id) VALUES
 
 -- ガチャマスタ
 -- start_at / end_at でガチャの開催期間を持たせる（end_at が NULL なら常設）
+-- type: normal = 通常（重みで抽選） / box = ボックスガチャ（当たったアイテムの残数が減っていく）
 CREATE TABLE gachas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
+    type ENUM('normal', 'box') NOT NULL DEFAULT 'normal',
     start_at DATETIME NOT NULL,
     end_at DATETIME DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ガチャのラインナップ（どのガチャから、どのカードが、どの重みで出るか）
 -- weight（重み）: 排出確率 = weight / 同じガチャの weight 合計
+--   ボックスガチャでは「箱に最初に入っている個数」として使う
 CREATE TABLE gacha_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gacha_id INT NOT NULL,
@@ -104,10 +113,11 @@ CREATE TABLE gacha_histories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ガチャマスタデータ
-INSERT INTO gachas (id, name, start_at, end_at) VALUES
-(1, '通常ガチャ', '2026-01-01 00:00:00', NULL),
-(2, '期間限定ガチャ（神レア確率アップ）', '2026-11-01 00:00:00', '2026-12-31 23:59:59'),
-(3, '終了済みガチャ', '2026-01-01 00:00:00', '2026-01-31 23:59:59');
+INSERT INTO gachas (id, name, type, start_at, end_at) VALUES
+(1, '通常ガチャ', 'normal', '2026-01-01 00:00:00', NULL),
+(2, '期間限定ガチャ（神レア確率アップ）', 'normal', '2026-11-01 00:00:00', '2026-12-31 23:59:59'),
+(3, '終了済みガチャ', 'normal', '2026-01-01 00:00:00', '2026-01-31 23:59:59'),
+(4, 'ボックスガチャ', 'box', '2026-01-01 00:00:00', NULL);
 
 -- ラインナップ（重みの合計はどれも 100 にしてあるので、重み = 排出率(%)）
 INSERT INTO gacha_items (gacha_id, card_id, weight) VALUES
@@ -128,4 +138,58 @@ INSERT INTO gacha_items (gacha_id, card_id, weight) VALUES
 (3, 2, 4),
 (3, 3, 15),
 (3, 4, 30),
-(3, 5, 50);
+(3, 5, 50),
+-- ボックスガチャ（箱の中身: 合計100個）
+(4, 1, 1),
+(4, 2, 3),
+(4, 3, 10),
+(4, 4, 26),
+(4, 5, 60);
+
+
+-- =========================================================
+-- 応用: ボックスガチャ・チーム編成
+-- =========================================================
+
+-- ユーザーごとのボックスの中身（残数）
+-- 初めて引くときに gacha_items.weight（初期個数）からコピーして作る。リセット時も同様。
+CREATE TABLE user_box_items (
+    user_id INT NOT NULL,
+    gacha_id INT NOT NULL,
+    card_id INT NOT NULL,
+    remaining INT UNSIGNED NOT NULL,
+    -- 「あるユーザーの、あるボックスの中身」を取る（WHERE user_id = ? AND gacha_id = ?）ので
+    -- この3列を主キーにすれば、そのまま検索用の索引になる
+    PRIMARY KEY (user_id, gacha_id, card_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (gacha_id) REFERENCES gachas(id),
+    FOREIGN KEY (card_id) REFERENCES cards(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- チーム
+CREATE TABLE user_teams (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- チームのメンバー（チームの何番目の枠に、どの所持カードを入れたか）
+CREATE TABLE user_team_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    team_id INT NOT NULL,
+    position TINYINT UNSIGNED NOT NULL,
+    user_card_id INT NOT NULL,
+    -- 1つの枠には1枚だけ
+    UNIQUE KEY uq_team_position (team_id, position),
+    -- 同じカード（インスタンス）を同じチームに2回入れない
+    UNIQUE KEY uq_team_card (team_id, user_card_id),
+    FOREIGN KEY (team_id) REFERENCES user_teams(id) ON DELETE CASCADE,
+    -- 強化の素材にしてカードが消えたら、チームからも外れる
+    FOREIGN KEY (user_card_id) REFERENCES user_cards(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO user_teams (id, user_id, name) VALUES
+(1, 1, 'チーム1'),
+(2, 1, 'チーム2'),
+(3, 1, 'チーム3');

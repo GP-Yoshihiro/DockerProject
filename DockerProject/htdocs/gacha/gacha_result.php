@@ -37,6 +37,7 @@ try {
         <?php foreach ($results as $item): ?>
             <?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?><br>
         <?php endforeach; ?>
+        <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
     <a href="gacha_form.html">戻る</a>
 </body>

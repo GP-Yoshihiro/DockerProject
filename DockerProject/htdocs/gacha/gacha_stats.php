@@ -15,17 +15,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
     if ($times) {
         try {
+            // 確率を調べるための試行なので、履歴だけ保存し所持カードには追加しない
             for ($i = 0; $i < $times; $i++) {
-                execute_gacha($pdo, $user_id, $gacha_id);
+                execute_gacha($pdo, $user_id, $gacha_id, GACHA_DRAW_COUNT, false);
             }
-            $message = "10連を {$times} 回実行しました。";
+            $message = "10連を {$times} 回実行しました。（所持カードには追加していません）";
         } catch (GachaException $e) {
             $message = $e->getMessage();
         }
     }
 }
 
-$stmt = $pdo->query("SELECT id, name FROM gachas ORDER BY id");
+$stmt = $pdo->query("SELECT id, name FROM gachas WHERE type = 'normal' ORDER BY id");
 $gachas = $stmt->fetchAll();
 
 /*
