@@ -8,7 +8,7 @@ $cards = fetch_user_cards($pdo, $user_id);
 // カードの種類ごとの枚数
 $summary = [];
 foreach ($cards as $card) {
-    $summary[$card['card_id']] ??= ['name' => $card['name'], 'count' => 0];
+    $summary[$card['card_id']] ??= ['name' => $card['name'], 'image' => $card['image'], 'count' => 0];
     $summary[$card['card_id']]['count']++;
 }
 ?>
@@ -17,6 +17,7 @@ foreach ($cards as $card) {
 <head>
     <meta charset="UTF-8">
     <title>所持カード一覧</title>
+    <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <h1>所持カード一覧</h1>
@@ -32,7 +33,7 @@ foreach ($cards as $card) {
         <?php foreach ($summary as $card_id => $row): ?>
         <tr>
             <td><?= htmlspecialchars($card_id) ?></td>
-            <td><?= htmlspecialchars($row['name']) ?></td>
+            <td><img class="card-thumb" src="<?= htmlspecialchars(card_image_url($row['image'])) ?>" alt=""> <?= htmlspecialchars($row['name']) ?></td>
             <td><?= htmlspecialchars($row['count']) ?></td>
         </tr>
         <?php endforeach; ?>
@@ -51,7 +52,7 @@ foreach ($cards as $card) {
         <?php foreach ($cards as $card): ?>
         <tr>
             <td><?= htmlspecialchars($card['id']) ?></td>
-            <td><?= htmlspecialchars($card['name']) ?></td>
+            <td><img class="card-thumb" src="<?= htmlspecialchars(card_image_url($card['image'])) ?>" alt=""> <?= htmlspecialchars($card['name']) ?></td>
             <td><?= htmlspecialchars($card['hp']) ?></td>
             <td><?= htmlspecialchars($card['atk']) ?></td>
             <td><?= htmlspecialchars($card['def']) ?></td>

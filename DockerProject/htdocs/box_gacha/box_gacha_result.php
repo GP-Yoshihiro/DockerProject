@@ -36,15 +36,21 @@ $total = array_sum(array_column($box, 'initial'));
 <head>
     <meta charset="UTF-8">
     <title>ボックスガチャ結果</title>
+    <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <?php if ($error !== null): ?>
         <p><?= htmlspecialchars($error) ?></p>
     <?php else: ?>
         ボックスガチャ結果<br>
-        <?php foreach ($results as $item): ?>
-            <?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?><br>
-        <?php endforeach; ?>
+        <div class="card-grid">
+            <?php foreach ($results as $item): ?>
+                <figure>
+                    <figcaption><?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?></figcaption>
+                    <img src="<?= htmlspecialchars(card_image_url($item['image'])) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
+                </figure>
+            <?php endforeach; ?>
+        </div>
         <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
     <p>ボックスの残り: <?= htmlspecialchars($left) ?> / <?= htmlspecialchars($total) ?></p>

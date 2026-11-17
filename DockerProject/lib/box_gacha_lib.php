@@ -43,7 +43,7 @@ function init_box(PDO $pdo, int $user_id, int $gacha_id): void
 function fetch_box(PDO $pdo, int $user_id, int $gacha_id): array
 {
     $sql = "
-        SELECT ub.card_id, c.name, ub.remaining, gi.weight AS initial
+        SELECT ub.card_id, c.name, c.image, ub.remaining, gi.weight AS initial
         FROM user_box_items ub
         JOIN gacha_items gi ON gi.gacha_id = ub.gacha_id AND gi.card_id = ub.card_id
         JOIN cards c ON c.id = ub.card_id
@@ -65,7 +65,7 @@ function fetch_box_for_view(PDO $pdo, int $user_id, int $gacha_id): array
         return $box;
     }
     $stmt = $pdo->prepare("
-        SELECT gi.card_id, c.name, gi.weight AS remaining, gi.weight AS initial
+        SELECT gi.card_id, c.name, c.image, gi.weight AS remaining, gi.weight AS initial
         FROM gacha_items gi
         JOIN cards c ON c.id = gi.card_id
         WHERE gi.gacha_id = ?
@@ -97,12 +97,17 @@ function execute_box_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count): a
 
         // 残数を重みにして抽選し、当たったものを1つ減らす
         $remaining = array_column($box, 'remaining', 'card_id');
-        $names = array_column($box, 'name', 'card_id');
+        $cards = array_column($box, null, 'card_id');
         $results = [];
         for ($i = 0; $i < $count; $i++) {
             $items = [];
             foreach ($remaining as $card_id => $n) {
-                $items[] = ['card_id' => $card_id, 'name' => $names[$card_id], 'weight' => $n];
+                $items[] = [
+                    'card_id' => $card_id,
+                    'name'    => $cards[$card_id]['name'],
+                    'image'   => $cards[$card_id]['image'],
+                    'weight'  => $n,
+                ];
             }
             $hit = draw_one($items);
             $remaining[$hit['card_id']]--;

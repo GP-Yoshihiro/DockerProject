@@ -28,6 +28,7 @@ $total = array_sum(array_column($box, 'initial'));
 <head>
     <meta charset="UTF-8">
     <title>ボックスガチャ</title>
+    <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <h1>ボックスガチャ</h1>
@@ -48,7 +49,7 @@ $total = array_sum(array_column($box, 'initial'));
         <?php foreach ($box as $row): ?>
         <tr>
             <td><?= htmlspecialchars($row['card_id']) ?></td>
-            <td><?= htmlspecialchars($row['name']) ?></td>
+            <td><img class="card-thumb" src="<?= htmlspecialchars(card_image_url($row['image'])) ?>" alt=""> <?= htmlspecialchars($row['name']) ?></td>
             <td><?= htmlspecialchars($row['remaining']) ?> / <?= htmlspecialchars($row['initial']) ?></td>
             <td><?= $left > 0 ? htmlspecialchars(number_format($row['remaining'] / $left * 100, 2)) : '-' ?></td>
         </tr>

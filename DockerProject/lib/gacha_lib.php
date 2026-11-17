@@ -1,6 +1,7 @@
 <?php
 // ガチャの共通処理（htdocs/gacha/ と htdocs/box_gacha/ の画面から使う）
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/card_lib.php';
 
 date_default_timezone_set('Asia/Tokyo');
 
@@ -46,7 +47,7 @@ function find_open_gacha(PDO $pdo, int $gacha_id, string $now): ?array
 function fetch_gacha_items(PDO $pdo, int $gacha_id): array
 {
     $stmt = $pdo->prepare("
-        SELECT gi.card_id, c.name, gi.weight
+        SELECT gi.card_id, c.name, c.image, gi.weight
         FROM gacha_items gi
         JOIN cards c ON gi.card_id = c.id
         WHERE gi.gacha_id = ?

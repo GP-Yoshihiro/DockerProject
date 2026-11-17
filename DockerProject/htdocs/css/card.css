@@ -1,0 +1,25 @@
+/* ガチャ結果: 2列でカードを並べる */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 160px);
+    gap: 12px 24px;
+    margin: 8px 0 16px 24px;
+}
+.card-grid figure {
+    margin: 0;
+    text-align: center;
+}
+.card-grid figcaption {
+    margin-bottom: 4px;
+}
+.card-grid img {
+    width: 90px;
+    height: 120px;
+}
+
+/* 一覧表の中の小さい画像 */
+.card-thumb {
+    width: 36px;
+    height: 48px;
+    vertical-align: middle;
+}

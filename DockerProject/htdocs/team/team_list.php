@@ -12,6 +12,7 @@ $teams = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>チーム一覧</title>
+    <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <h1>チーム一覧</h1>
@@ -43,7 +44,7 @@ $teams = $stmt->fetchAll();
             <tr>
                 <td><?= $pos ?></td>
                 <?php if (isset($members[$pos])): ?>
-                    <td><?= htmlspecialchars($members[$pos]['name']) ?>（ID: <?= htmlspecialchars($members[$pos]['user_card_id']) ?>）</td>
+                    <td><img class="card-thumb" src="<?= htmlspecialchars(card_image_url($members[$pos]['image'])) ?>" alt=""> <?= htmlspecialchars($members[$pos]['name']) ?>（ID: <?= htmlspecialchars($members[$pos]['user_card_id']) ?>）</td>
                     <td><?= htmlspecialchars($members[$pos]['hp']) ?></td>
                     <td><?= htmlspecialchars($members[$pos]['atk']) ?></td>
                     <td><?= htmlspecialchars($members[$pos]['def']) ?></td>

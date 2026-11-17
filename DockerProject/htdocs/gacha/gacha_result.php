@@ -28,15 +28,21 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>ガチャ結果</title>
+    <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
     <?php if ($error !== null): ?>
         <p><?= htmlspecialchars($error) ?></p>
     <?php else: ?>
         ガチャ結果<br>
-        <?php foreach ($results as $item): ?>
-            <?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?><br>
-        <?php endforeach; ?>
+        <div class="card-grid">
+            <?php foreach ($results as $item): ?>
+                <figure>
+                    <figcaption><?= htmlspecialchars($item['card_id']) ?>：<?= htmlspecialchars($item['name']) ?></figcaption>
+                    <img src="<?= htmlspecialchars(card_image_url($item['image'])) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
+                </figure>
+            <?php endforeach; ?>
+        </div>
         <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
     <a href="gacha_form.html">戻る</a>
