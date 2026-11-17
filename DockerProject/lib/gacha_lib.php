@@ -47,7 +47,7 @@ function find_open_gacha(PDO $pdo, int $gacha_id, string $now): ?array
 function fetch_gacha_items(PDO $pdo, int $gacha_id): array
 {
     $stmt = $pdo->prepare("
-        SELECT gi.card_id, c.name, c.rarity, c.image, gi.weight
+        SELECT gi.card_id, c.name, c.rarity, c.image, c.cutin_image, gi.weight
         FROM gacha_items gi
         JOIN cards c ON gi.card_id = c.id
         WHERE gi.gacha_id = ?

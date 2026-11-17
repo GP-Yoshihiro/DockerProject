@@ -245,6 +245,105 @@ html:not(.js) .summon,
     box-shadow: none;
 }
 
+/* ===== 特殊演出（カットイン） ===== */
+.cutin {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    display: none;
+    overflow: hidden;
+    background: radial-gradient(circle at 70% 50%, #2a1c00 0, #07060f 75%);
+    cursor: pointer;
+}
+.cutin.show { display: block; }
+.cutin.leave { animation: cutin-out 0.45s ease-in forwards; }
+@keyframes cutin-out { to { opacity: 0; transform: scale(1.05); } }
+
+/* 背景の集中線（横に流れる光の筋） */
+.cutin-lines {
+    position: absolute;
+    inset: -50% -50%;
+    background: repeating-linear-gradient(100deg, rgba(255, 220, 120, 0) 0 38px, rgba(255, 220, 120, 0.22) 38px 41px);
+    animation: cutin-lines 0.6s linear infinite;
+}
+@keyframes cutin-lines { to { transform: translateX(-80px); } }
+
+/* 斜めの金色の帯 */
+.cutin-band {
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    top: 58%;
+    height: 120px;
+    background: linear-gradient(90deg, rgba(255, 207, 0, 0), #ffcf00 20%, #fff3b0 50%, #ffcf00 80%, rgba(255, 207, 0, 0));
+    box-shadow: 0 0 40px rgba(255, 207, 0, 0.7);
+    transform: skewY(-8deg) translateX(-110%);
+    animation: cutin-band 0.45s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0.9;
+}
+@keyframes cutin-band { to { transform: skewY(-8deg) translateX(0); } }
+
+/* キャラクター画像: 右から勢いよく入ってきて、少しずつ寄っていく */
+.cutin-img {
+    position: absolute;
+    right: 4%;
+    bottom: 0;
+    height: 92%;
+    max-width: 70%;
+    object-fit: contain;
+    object-position: bottom right;
+    filter: drop-shadow(0 0 24px rgba(255, 207, 0, 0.6));
+    transform: translateX(120%);
+    animation:
+        cutin-img-in 0.55s 0.2s cubic-bezier(0.15, 0.85, 0.25, 1.1) forwards,
+        cutin-img-zoom 2.4s 0.75s ease-out forwards;
+}
+@keyframes cutin-img-in { to { transform: translateX(0); } }
+@keyframes cutin-img-zoom { from { transform: translateX(0) scale(1); } to { transform: translateX(-2%) scale(1.05); } }
+
+/* レア度とカード名: 左から */
+.cutin-text {
+    position: absolute;
+    left: 6%;
+    top: 58%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transform: translateY(-50%) translateX(-140%);
+    animation: cutin-text-in 0.5s 0.55s cubic-bezier(0.2, 0.8, 0.2, 1.2) forwards;
+}
+@keyframes cutin-text-in { to { transform: translateY(-50%) translateX(0); } }
+.cutin-text .rarity-badge {
+    padding: 2px 14px;
+    font-size: 1.6rem;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+}
+.cutin-name {
+    color: #fff;
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 6px #b8860b, 0 0 20px rgba(255, 207, 0, 0.9);
+}
+.cutin-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    font-size: 0.9rem;
+    animation: blink 1.6s ease-in-out infinite;
+}
+
+@media (max-width: 600px) {
+    .cutin-name { font-size: 2rem; }
+    .cutin-text .rarity-badge { font-size: 1.1rem; }
+    .cutin-img { max-width: 85%; height: 70%; }
+    .cutin-text { top: 30%; }
+}
+
 /* UR を引いたときの画面フラッシュ */
 .flash {
     position: fixed;

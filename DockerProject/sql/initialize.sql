@@ -34,7 +34,10 @@ CREATE TABLE cards (
     -- 画像ファイル名（htdocs/images/cards/ 内のファイル）。NULL のときは画像なし
     -- ※ サーバー（Linux）では大文字・小文字が区別されるので、ファイル名は正確に合わせること
     -- フォルダのパスはPHP側（lib/card_lib.php）で付けるので、置き場所を変えてもDBは直さなくてよい
-    image VARCHAR(255) DEFAULT NULL
+    image VARCHAR(255) DEFAULT NULL,
+    -- 特殊演出（カットイン）用の画像ファイル名。設定したカードを引くと、カードがめくれる前に演出が入る
+    -- NULL のカードは演出なし。画像が見つからないときも演出を飛ばしてそのまま進む
+    cutin_image VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ユーザー所持カードテーブル
@@ -54,12 +57,12 @@ CREATE TABLE user_cards (
 INSERT INTO users (id, name) VALUES (1, 'テストユーザー');
 
 -- マスタデータ
-INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image) VALUES 
-(1, 'マリー', NULL, 500, 100, 100, 5, 'Mary.png'),
-(2, 'ミカ', 1, 300, 50, 50, 4, 'Mika.png'),
-(3, 'キサキ', 2, 200, 30, 30, 3, 'kisaki.png'),
-(4, 'ケイ', NULL, 150, 20, 20, 2, 'kei.png'),
-(5, 'カズサ', NULL, 100, 10, 10, 1, 'kazusa.png');
+INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image, cutin_image) VALUES 
+(1, 'マリー', NULL, 500, 100, 100, 5, 'Mary.png', 'Mary01.png'),
+(2, 'ミカ', 1, 300, 50, 50, 4, 'Mika.png', NULL),
+(3, 'キサキ', 2, 200, 30, 30, 3, 'kisaki.png', NULL),
+(4, 'ケイ', NULL, 150, 20, 20, 2, 'kei.png', NULL),
+(5, 'カズサ', NULL, 100, 10, 10, 1, 'kazusa.png', NULL);
 
 -- 所持カードデータ
 INSERT INTO user_cards (user_id, card_id) VALUES 
