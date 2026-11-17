@@ -1,6 +1,6 @@
 <?php
 // 排出率の集計: 何百回も試行して、実際の排出率が設定した確率（重み）に収束しているかを確認する
-require_once __DIR__ . '/gacha_lib.php';
+require_once __DIR__ . '/../../lib/gacha_lib.php';
 
 $user_id = 1;
 $gacha_id = filter_input(INPUT_GET, 'gacha_id', FILTER_VALIDATE_INT) ?: 1;

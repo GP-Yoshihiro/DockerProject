@@ -1,5 +1,5 @@
 <?php
-// ガチャの共通処理（gacha_result.php / gacha_stats.php から使う）
+// ガチャの共通処理（htdocs/gacha/gacha_result.php / gacha_stats.php から使う）
 require_once __DIR__ . '/db.php';
 
 date_default_timezone_set('Asia/Tokyo');

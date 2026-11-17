@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/gacha_lib.php';
+require_once __DIR__ . '/../../lib/gacha_lib.php';
 
 $user_id = 1; // ログイン機能がないため固定（forge_*.php と同じ）
 

@@ -1,5 +1,5 @@
 <?php
-require_once 'db.php';
+require_once __DIR__ . '/../../lib/db.php';
 $user_id = 1;
 $card_id = $_GET['target_item_type_id'] ?? null;
 $base_id = $_GET['base_user_item_id'] ?? null;

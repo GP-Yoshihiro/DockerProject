@@ -1,5 +1,5 @@
 <?php
-require_once 'db.php';
+require_once __DIR__ . '/../../lib/db.php';
 $user_id = 1;
 $base_id = $_GET['base_id'] ?? null;
 $material_id = $_GET['material_id'] ?? null;

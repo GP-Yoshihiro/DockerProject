@@ -5,7 +5,10 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./:/var/www/html
+      # 公開フォルダ（ブラウザから見えるのは htdocs の中だけ）
+      - ./htdocs:/var/www/html
+      # 共通処理（DB接続など）。公開フォルダの外に置き、ブラウザから直接見えないようにする
+      - ./lib:/var/www/lib
     depends_on:
       - mysql
   mysql:
