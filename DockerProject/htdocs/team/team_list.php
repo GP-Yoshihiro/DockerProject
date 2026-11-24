@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/team_lib.php';
 
-$user_id = 1;
+$user_id = GAME_USER_ID;
 
 $stmt = $pdo->prepare("SELECT id, name FROM user_teams WHERE user_id = ? ORDER BY id");
 $stmt->execute([$user_id]);
@@ -10,13 +10,11 @@ $teams = $stmt->fetchAll();
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>チーム一覧</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/card.css">
+    <?php render_game_head('チーム編成'); ?>
 </head>
 <body>
-    <h1>チーム一覧</h1>
+    <?php render_game_header($pdo, $user_id); ?>
+    <h1>チーム編成</h1>
 
     <?php if (isset($_GET['saved'])): ?>
         <p class="notice">チーム編成を保存しました。</p>
@@ -25,45 +23,35 @@ $teams = $stmt->fetchAll();
     <?php foreach ($teams as $team): ?>
         <?php
         $members = fetch_team_members($pdo, (int)$team['id']);
-        $total = ['hp' => 0, 'atk' => 0, 'def' => 0];
-        foreach ($members as $m) {
-            foreach ($total as $key => $_) {
-                $total[$key] += $m[$key];
-            }
-        }
+        $power = array_sum(array_column($members, 'power'));
         ?>
-        <h2><?= htmlspecialchars($team['name']) ?></h2>
-        <table border="1">
-            <tr>
-                <th>枠</th>
-                <th>カード名</th>
-                <th>HP</th>
-                <th>ATK</th>
-                <th>DEF</th>
-            </tr>
-            <?php for ($pos = 1; $pos <= TEAM_SIZE; $pos++): ?>
-            <tr>
-                <td><?= $pos ?></td>
-                <?php if (isset($members[$pos])): ?>
-                    <td><img class="card-thumb" src="<?= htmlspecialchars(card_image_url($members[$pos]['image'])) ?>" alt=""> <?= htmlspecialchars($members[$pos]['name']) ?>（ID: <?= htmlspecialchars($members[$pos]['user_card_id']) ?>）</td>
-                    <td><?= htmlspecialchars($members[$pos]['hp']) ?></td>
-                    <td><?= htmlspecialchars($members[$pos]['atk']) ?></td>
-                    <td><?= htmlspecialchars($members[$pos]['def']) ?></td>
-                <?php else: ?>
-                    <td colspan="4">（空き）</td>
+        <section class="panel">
+            <h2><?= htmlspecialchars($team['name']) ?> <span class="muted">戦力 <?= number_format($power) ?></span></h2>
+            <div class="team-row">
+                <?php for ($pos = 1; $pos <= TEAM_SIZE; $pos++): ?>
+                    <?php if (isset($members[$pos])): ?>
+                        <?php $m = $members[$pos]; ?>
+                        <a class="mini-card rarity-<?= (int)$m['rarity'] ?>" href="/card/card_detail.php?id=<?= (int)$m['user_card_id'] ?>">
+                            <img src="<?= htmlspecialchars($m['icon_url']) ?>" alt="">
+                            <span class="mini-name"><?= htmlspecialchars($m['name']) ?></span>
+                            <span class="mini-sub"><?= attribute_badge($m['attribute']) ?> <?= htmlspecialchars(role_label($m['role'])) ?></span>
+                            <span class="mini-sub">Lv<?= (int)$m['level'] ?> / 戦力 <?= number_format($m['power']) ?></span>
+                            <?php if ($m['engine_name']): ?><span class="mini-sub">音動機: <?= htmlspecialchars($m['engine_name']) ?></span><?php endif; ?>
+                        </a>
+                    <?php else: ?>
+                        <div class="mini-card empty">（空き）</div>
+                    <?php endif; ?>
+                <?php endfor; ?>
+            </div>
+            <p class="links">
+                <a href="team_edit.php?team_id=<?= (int)$team['id'] ?>">編成する</a>
+                <?php if ($members): ?>
+                    <a href="/game/stages.php?team_id=<?= (int)$team['id'] ?>">このチームでステージへ</a>
                 <?php endif; ?>
-            </tr>
-            <?php endfor; ?>
-            <tr>
-                <th colspan="2">合計</th>
-                <td><?= $total['hp'] ?></td>
-                <td><?= $total['atk'] ?></td>
-                <td><?= $total['def'] ?></td>
-            </tr>
-        </table>
-        <p><a href="team_edit.php?team_id=<?= htmlspecialchars($team['id']) ?>">編成する</a></p>
+            </p>
+        </section>
     <?php endforeach; ?>
 
-    <p><a href="../">メニューに戻る</a></p>
+    <p><a href="/game/">ゲームのホームに戻る</a></p>
 </body>
 </html>

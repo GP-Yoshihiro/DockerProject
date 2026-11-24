@@ -4,3 +4,6 @@ DockerProject/htdocs/images/cards/*.png
 # 資料05: ガチャ結果の出力ファイル（コンテナが作る。GitHubには上げない）
 DockerProject/output/
 DockerProject/storage/
+
+# ゲーム: 敵キャラの画像（各自のPCに置く。GitHubには上げない）
+DockerProject/htdocs/images/enemies/*.png

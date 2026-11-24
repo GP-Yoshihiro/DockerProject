@@ -132,10 +132,10 @@ html.js body:not(.reveal-done) .result-summary { visibility: hidden; }
     font-size: 0.95rem;
 }
 .rarity-badge.rarity-5 { background: linear-gradient(90deg, #ff5a5a, #ffcf00, #3cdc78, #508cff); }
-.rarity-badge.rarity-4 { background: #8a4dff; }
-.rarity-badge.rarity-3 { background: #3a86ff; }
-.rarity-badge.rarity-2 { background: #52b788; }
-.rarity-badge.rarity-1 { background: #8d8d8d; }
+.rarity-badge.rarity-4 { background: linear-gradient(90deg, #ffb300, #ffd34d); color: #3d2a00; }
+.rarity-badge.rarity-3 { background: #8a4dff; }
+.rarity-badge.rarity-2 { background: #a98bff; }
+.rarity-badge.rarity-1 { background: #3a86ff; }
 
 /* ===== 開封の演出（画面全体） ===== */
 .summon {
@@ -444,4 +444,27 @@ html:not(.js) .summon,
 
 @media (prefers-reduced-motion: reduce) {
     .card-flip, .revealed .card-flip, .rarity-5 .card-front, .summon-orb { animation: none; transition: none; }
+}
+
+/* ゲーム: ガチャで引いたカードがどうなったか（NEW / 凸 / メダルに変換） */
+.grant-badge {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    line-height: 1.6;
+}
+.grant-new { background: #ff3d77; color: #fff; }
+.grant-limit_break { background: #ffd34d; color: #5a3d00; }
+.grant-medal { background: #8a94a6; color: #fff; }
+.grant-pickup { background: linear-gradient(90deg, #ff3d77, #ff7a18); color: #fff; }
+.kind-badge {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: #eef1f9;
+    color: #5b6475;
+    font-size: 0.7rem;
 }

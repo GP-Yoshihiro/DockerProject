@@ -9,20 +9,6 @@ require_once __DIR__ . '/gacha_lib.php';
 const BOX_GACHA_ID = 4; // gachas.id（type = 'box'）
 
 /**
- * 同じユーザーのボックス操作（抽選・リセット）を1つずつ順番に実行させるためのロック
- *
- * users の行を FOR UPDATE でロックすると、同じユーザーの別リクエストは
- * このトランザクションが終わる（commit / rollBack）まで待たされる。
- * ※ ボックスの行を直接ロックするだけだと、INSERT IGNORE（共有ロック）→ FOR UPDATE（排他ロック）の
- *   順にロックを強めるところで、同時リクエスト同士がお互いを待ってデッドロックになる。
- */
-function lock_user(PDO $pdo, int $user_id): void
-{
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? FOR UPDATE");
-    $stmt->execute([$user_id]);
-}
-
-/**
  * ユーザーのボックスがまだ無ければ、gacha_items.weight（初期個数）から作る
  * INSERT IGNORE なので、すでにある場合は何もしない
  */
@@ -94,6 +80,8 @@ function execute_box_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count): a
         if ($left < $count) {
             throw new GachaException("ボックスの残りが {$left} 個のため、{$count} 回は引けません。");
         }
+        // ガチャ石（通常ガチャと同じ値段）
+        consume_item($pdo, $user_id, ITEM_STONE, gacha_cost($count));
 
         // 残数を重みにして抽選し、当たったものを1つ減らす
         $remaining = array_column($box, 'remaining', 'card_id');
@@ -128,7 +116,7 @@ function execute_box_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count): a
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
-        if (!$e instanceof GachaException) {
+        if (!$e instanceof GameException) {
             gacha_log('ボックスガチャの保存に失敗', ['user_id' => $user_id, 'gacha_id' => $gacha_id, 'error' => $e->getMessage()]);
         }
         throw $e;
