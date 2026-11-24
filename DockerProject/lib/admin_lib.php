@@ -170,8 +170,36 @@ function admin_validate_card(array $in, array $icon_files, array $stand_files): 
 }
 
 /**
- * キャラを登録する（$card_id があれば更新）。戻り値はキャラの ID
+ * キャラを新しく登録する（スキルも作る）。呼び出し側でトランザクションを開始しておくこと。戻り値はキャラの ID
  * ステータス・スキルの数値は、レア度とタイプから標準値で決める
+ */
+function admin_save_card_in_transaction(PDO $pdo, array $v): int
+{
+    $stats = default_card_stats($v['rarity'], $v['role']);
+    $skill = default_skill($v['skill_effect'], $v['rarity']);
+
+    // 同じアイコンのキャラを二重に登録しない（一括登録を2回送信したときなど）
+    if ($v['icon_image'] !== null) {
+        $stmt = $pdo->prepare("SELECT name FROM cards WHERE icon_image = ? FOR UPDATE");
+        $stmt->execute([$v['icon_image']]);
+        if ($name = $stmt->fetchColumn()) {
+            throw new GameException("このアイコンは「{$name}」で登録済みです。");
+        }
+    }
+    $stmt = $pdo->prepare("INSERT INTO skills (name, effect, power, cooldown, duration) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$v['skill_name'], $v['skill_effect'], $skill['power'], $skill['cooldown'], $skill['duration']]);
+    $skill_id = (int)$pdo->lastInsertId();
+    $stmt = $pdo->prepare("
+        INSERT INTO cards (name, hp, atk, def, spd, rarity, attribute, role, skill_id, icon_image, stand_image, pool, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([$v['name'], $stats['hp'], $stats['atk'], $stats['def'], $stats['spd'], $v['rarity'], $v['attribute'], $v['role'],
+        $skill_id, $v['icon_image'], $v['stand_image'], $v['pool'], (int)$v['is_active']]);
+    return (int)$pdo->lastInsertId();
+}
+
+/**
+ * キャラを登録する（$card_id があれば更新）。戻り値はキャラの ID
  */
 function admin_save_card(PDO $pdo, array $v, ?int $card_id): int
 {
@@ -181,16 +209,7 @@ function admin_save_card(PDO $pdo, array $v, ?int $card_id): int
     $pdo->beginTransaction();
     try {
         if ($card_id === null) {
-            $stmt = $pdo->prepare("INSERT INTO skills (name, effect, power, cooldown, duration) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$v['skill_name'], $v['skill_effect'], $skill['power'], $skill['cooldown'], $skill['duration']]);
-            $skill_id = (int)$pdo->lastInsertId();
-            $stmt = $pdo->prepare("
-                INSERT INTO cards (name, hp, atk, def, spd, rarity, attribute, role, skill_id, icon_image, stand_image, pool, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([$v['name'], $stats['hp'], $stats['atk'], $stats['def'], $stats['spd'], $v['rarity'], $v['attribute'], $v['role'],
-                $skill_id, $v['icon_image'], $v['stand_image'], $v['pool'], (int)$v['is_active']]);
-            $card_id = (int)$pdo->lastInsertId();
+            $card_id = admin_save_card_in_transaction($pdo, $v);
         } else {
             $stmt = $pdo->prepare("SELECT skill_id, rarity, role FROM cards WHERE id = ? FOR UPDATE");
             $stmt->execute([$card_id]);

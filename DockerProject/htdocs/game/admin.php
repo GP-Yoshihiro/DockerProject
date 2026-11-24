@@ -139,7 +139,7 @@ function image_options(array $files, ?string $selected): void
         ステータス・スキルの数値は、レア度とタイプから標準値で決まります。
         <strong>ファイル名がキャラ名と同じ音動機</strong>は、そのキャラの専用音動機として登録できます。
     </p>
-    <nav class="links"><a href="#unregistered">未登録の画像</a> <a href="#cards">キャラ</a> <a href="#engines">音動機</a> <a href="#banners">ガチャのピックアップ</a></nav>
+    <nav class="links"><a href="admin_bulk.php">一括登録</a> <a href="#unregistered">未登録の画像</a> <a href="#cards">キャラ</a> <a href="#engines">音動機</a> <a href="#banners">ガチャのピックアップ</a></nav>
 
     <?php if ($form !== null): ?>
         <section class="panel form-panel" id="card-form">
@@ -275,7 +275,10 @@ function image_options(array $files, ?string $selected): void
             キャラを先に登録すると、同じファイル名の音動機が専用音動機の候補になります。
             立ち絵・音動機のファイル名が少し違う（1〜2文字の打ち間違い）ときも、近いものを候補にします。
         </p>
-        <p><a href="admin.php?new_card=1#card-form">画像を選ばずにキャラを登録</a></p>
+        <p class="links">
+            <a href="admin_bulk.php"><strong>未登録のアイコンをまとめて登録（一括登録）</strong></a>
+            <a href="admin.php?new_card=1#card-form">画像を選ばずにキャラを登録</a>
+        </p>
     </section>
 
     <section class="panel" id="cards">

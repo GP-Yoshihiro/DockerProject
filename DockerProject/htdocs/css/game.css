@@ -368,3 +368,15 @@ html.js .result-panel.show { display: block; animation: fade-in 0.4s; }
     .banner-pickup, .banner-pickup img { width: 120px; height: 160px; flex-basis: 120px; }
     .pity-row { grid-template-columns: 6em 1fr 6em; }
 }
+
+/* ===== 一括登録 ===== */
+body.wide { max-width: 1400px; }
+.bulk-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; }
+.bulk-tools select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+.bulk-scroll { overflow-x: auto; border-radius: 8px; }
+.bulk-table { min-width: 1250px; }
+.bulk-table td { padding: 4px 6px; vertical-align: middle; }
+.bulk-table input[type="text"] { width: 9em; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+.bulk-table select { max-width: 11em; padding: 3px 4px; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; }
+.bulk-table label.check { display: flex; align-items: center; gap: 2px; font-size: 0.8rem; }
+.bulk-table .hint { color: #c97a00; font-weight: bold; cursor: help; }
