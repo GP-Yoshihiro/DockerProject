@@ -1,0 +1,5 @@
+# root の crontab（コンテナ内で `crontab -l` で確認できる）
+# 分 時 日 月 曜日  コマンド
+# 1分ごとに、web コンテナが出力したガチャ結果を storage へ移動する
+# 出力は PID 1（cron）の標準出力に流すので `docker compose logs mng` で確認できる
+* * * * * /usr/local/bin/move_gacha_output.sh >> /proc/1/fd/1 2>&1

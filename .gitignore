@@ -1,2 +1,6 @@
 # 各自のPCに置くカード画像（GitHubには上げない）
 DockerProject/htdocs/images/cards/*.png
+
+# 資料05: ガチャ結果の出力ファイル（コンテナが作る。GitHubには上げない）
+DockerProject/output/
+DockerProject/storage/

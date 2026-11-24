@@ -58,8 +58,8 @@ INSERT INTO users (id, name) VALUES (1, 'テストユーザー');
 
 -- マスタデータ
 INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image, cutin_image) VALUES 
-(1, 'マリー', NULL, 500, 100, 100, 5, 'Mary.png', 'Mary01.png'),
-(2, 'ミカ', 1, 300, 50, 50, 4, 'Mika.png', NULL),
+(1, 'マリー', NULL, 500, 100, 100, 5, 'mary.png', 'mary01.png'),
+(2, 'ミカ', 1, 300, 50, 50, 4, 'mika.png', NULL),
 (3, 'キサキ', 2, 200, 30, 30, 3, 'kisaki.png', NULL),
 (4, 'ケイ', NULL, 150, 20, 20, 2, 'kei.png', NULL),
 (5, 'カズサ', NULL, 100, 10, 10, 1, 'kazusa.png', NULL);
