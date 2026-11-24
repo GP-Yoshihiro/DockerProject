@@ -66,7 +66,7 @@ function card_battle_units(array $cards, string $prefix, string $side): array
     foreach (array_values($cards) as $i => $c) {
         $units[] = make_battle_unit("{$prefix}{$i}", $side, [
             'name'        => $c['name'],
-            'image'       => $c['image_url'],
+            'image'       => $c['icon_url'],
             'hp'          => $c['stats']['hp'],
             'atk'         => $c['stats']['atk'],
             'def'         => $c['stats']['def'],
@@ -76,6 +76,10 @@ function card_battle_units(array $cards, string $prefix, string $side): array
             'level'       => (int)$c['level'],
             'limit_break' => (int)$c['limit_break'],
             'skill'       => $c['skill'],
+            'dmg_bonus'       => $c['engine_bonus']['dmg'],
+            'skill_dmg_bonus' => $c['engine_bonus']['skill_dmg'],
+            'heal_bonus'      => $c['engine_bonus']['heal'],
+            'engine'          => $c['engine_name'] ?? null,
         ]);
     }
     return $units;

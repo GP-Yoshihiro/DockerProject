@@ -17,8 +17,28 @@ const EVOLUTION_COSTS = [
     3 => ['crystal' => 10, 'gold' => 6000],
 ];
 
-/** 完凸後にガチャで重複したとき、レア度に応じてもらえるショップメダル */
-const OVERFLOW_MEDALS = [5 => 50, 4 => 20, 3 => 8, 2 => 3, 1 => 1];
+/** 完凸後にガチャで重複したとき、レア度に応じてもらえるショップメダル（5 Sキャラ / 4 S音動機 / 3 Aキャラ / 2 A音動機 / 1 B音動機） */
+const OVERFLOW_MEDALS = [5 => 50, 4 => 30, 3 => 10, 2 => 5, 1 => 1];
+
+// ---- 音動機 ----
+const MAX_ENGINE_LIMIT_BREAK = 5;
+/** 凸1つごとの、音動機の効果量（汎用効果・専用効果）の上昇率 */
+const ENGINE_LB_EFFECT_RATE = 0.25;
+/** 進化1段階ごとの、音動機のサブステータスの上昇率 */
+const ENGINE_EVOLUTION_SUB_RATE = 0.25;
+/** 音動機の進化素材（チューニングコア）。ゴールドはキャラと同じ */
+const ITEM_ENGINE_CORE = 35;
+const ENGINE_EVOLUTION_CORES = [1 => 3, 2 => 6, 3 => 10];
+
+const ENGINE_EFFECT_LABELS = [
+    'atk_pct'   => '攻撃',
+    'hp_pct'    => 'HP',
+    'def_pct'   => '防御',
+    'skill_dmg' => 'スキルのダメージ',
+    'heal'      => '回復量',
+    'attr_dmg'  => '与ダメージ',
+    'spd'       => '素早さ',
+];
 
 /** レベル1つごとのステータス上昇率（基礎値に対して） */
 const LEVEL_GROWTH = 0.03;
@@ -37,11 +57,19 @@ const STAT_LABELS = ['hp' => 'HP', 'atk' => '攻撃', 'def' => '防御', 'spd' =
 const USER_CARD_SELECT = "
     SELECT uc.id AS user_card_id, uc.user_id, uc.card_id, uc.level, uc.exp, uc.evolution, uc.limit_break, uc.created_at,
            c.name, c.rarity, c.attribute, c.role, c.hp, c.atk, c.def, c.spd, c.image, c.cutin_image,
+           c.icon_image, c.stand_image, c.pool, c.is_active,
            s.id AS skill_id, s.name AS skill_name, s.effect AS skill_effect,
-           s.power AS skill_power, s.cooldown AS skill_cooldown, s.duration AS skill_duration
+           s.power AS skill_power, s.cooldown AS skill_cooldown, s.duration AS skill_duration,
+           ue.id AS engine_user_id, ue.level AS engine_level, ue.evolution AS engine_evolution, ue.limit_break AS engine_limit_break,
+           we.id AS engine_id, we.name AS engine_name, we.rarity AS engine_rarity, we.image AS engine_image,
+           we.base_atk AS engine_base_atk, we.sub_stat AS engine_sub_stat, we.sub_value AS engine_sub_value,
+           we.effect_type AS engine_effect_type, we.effect_attribute AS engine_effect_attribute, we.effect_value AS engine_effect_value,
+           we.signature_card_id AS engine_signature_card_id, we.signature_value AS engine_signature_value
     FROM user_cards uc
     JOIN cards c ON c.id = uc.card_id
     JOIN skills s ON s.id = c.skill_id
+    LEFT JOIN user_w_engines ue ON ue.equipped_user_card_id = uc.id
+    LEFT JOIN w_engines we ON we.id = ue.w_engine_id
 ";
 
 // ---------------------------------------------------------------
@@ -104,14 +132,15 @@ function limit_break_stat_bonus(int $limit_break): int
 }
 
 /**
- * 今のステータス（レベル・凸を反映）
- * $card には hp / atk / def / spd（基礎値）・level・limit_break・role が必要
+ * 今のステータス（レベル・凸・装備している音動機を反映）
+ * $card には hp / atk / def / spd（基礎値）・level・limit_break・role が必要（音動機は engine_* の列）
  */
 function card_stats(array $card): array
 {
     $growth = 1 + LEVEL_GROWTH * ((int)$card['level'] - 1);
     $bonus = limit_break_stat_bonus((int)$card['limit_break']);
     $boosted = LIMIT_BREAK_STATS[$card['role']] ?? [];
+    $engine = engine_bonus($card);
 
     $stats = [];
     foreach (['hp', 'atk', 'def'] as $key) {
@@ -119,10 +148,93 @@ function card_stats(array $card): array
         if (in_array($key, $boosted, true)) {
             $value *= 1 + $bonus / 100;
         }
+        if ($key === 'atk') {
+            $value += $engine['atk_flat'];
+        }
+        $value *= 1 + $engine["{$key}_pct"] / 100;
         $stats[$key] = (int)round($value);
     }
-    $stats['spd'] = (int)$card['spd'];
+    $stats['spd'] = (int)$card['spd'] + $engine['spd'];
     return $stats;
+}
+
+/**
+ * 音動機のレベル・進化・凸を反映した数値
+ * $engine には base_atk / sub_value / effect_value / signature_value と level / evolution / limit_break が必要
+ */
+function engine_values(array $engine): array
+{
+    $growth = 1 + LEVEL_GROWTH * ((int)$engine['level'] - 1);
+    $lb_rate = 1 + ENGINE_LB_EFFECT_RATE * (int)$engine['limit_break'];
+    return [
+        'atk'       => (int)round((int)$engine['base_atk'] * $growth),
+        'sub'       => round((int)$engine['sub_value'] * (1 + ENGINE_EVOLUTION_SUB_RATE * (int)$engine['evolution']), 1),
+        'effect'    => round((int)$engine['effect_value'] * $lb_rate, 1),
+        'signature' => round((int)$engine['signature_value'] * $lb_rate, 1),
+    ];
+}
+
+/**
+ * 装備している音動機によるボーナス（装備していなければすべて 0）
+ *   atk_flat: 攻撃力に足す値 / *_pct: HP・攻撃・防御の % / spd: 素早さ
+ *   skill_dmg: スキルのダメージ% / heal: 回復量% / dmg: 与ダメージ%（属性が合うとき）
+ *   signature: 専用効果（そのキャラ専用の音動機を装備しているとき、スキルの効果量 +○%）
+ */
+function engine_bonus(array $card): array
+{
+    $bonus = ['atk_flat' => 0, 'hp_pct' => 0.0, 'atk_pct' => 0.0, 'def_pct' => 0.0, 'spd' => 0,
+              'skill_dmg' => 0.0, 'heal' => 0.0, 'dmg' => 0.0, 'signature' => 0.0];
+    if (empty($card['engine_id'])) {
+        return $bonus;
+    }
+    $v = engine_values([
+        'base_atk' => $card['engine_base_atk'], 'sub_value' => $card['engine_sub_value'],
+        'effect_value' => $card['engine_effect_value'], 'signature_value' => $card['engine_signature_value'],
+        'level' => $card['engine_level'], 'evolution' => $card['engine_evolution'], 'limit_break' => $card['engine_limit_break'],
+    ]);
+    $bonus['atk_flat'] = $v['atk'];
+    $bonus[$card['engine_sub_stat'] . '_pct'] += $v['sub'];
+
+    switch ($card['engine_effect_type']) {
+        case 'atk_pct':
+        case 'hp_pct':
+        case 'def_pct':
+            $bonus[$card['engine_effect_type']] += $v['effect'];
+            break;
+        case 'spd':
+            $bonus['spd'] += (int)round($v['effect']);
+            break;
+        case 'skill_dmg':
+        case 'heal':
+            $bonus[$card['engine_effect_type']] += $v['effect'];
+            break;
+        case 'attr_dmg':
+            // 属性汎用: 同じ属性のキャラが装備したときだけ
+            if ($card['engine_effect_attribute'] === $card['attribute']) {
+                $bonus['dmg'] += $v['effect'];
+            }
+            break;
+    }
+    if ((int)$card['engine_signature_card_id'] === (int)$card['card_id']) {
+        $bonus['signature'] = $v['signature'];
+    }
+    return $bonus;
+}
+
+/**
+ * 音動機の効果の説明文
+ */
+function engine_effect_description(array $engine, ?float $effect = null): string
+{
+    $value = $effect ?? (float)$engine['effect_value'];
+    $label = ENGINE_EFFECT_LABELS[$engine['effect_type']] ?? '';
+    if ($engine['effect_type'] === 'spd') {
+        return "素早さ +{$value}";
+    }
+    if ($engine['effect_type'] === 'attr_dmg') {
+        return attribute_label($engine['effect_attribute']) . "属性のキャラが装備すると、与ダメージ +{$value}%";
+    }
+    return "{$label} +{$value}%";
 }
 
 /**
@@ -161,6 +273,15 @@ function card_skill(array $card): array
     // 4凸: クールタイム -1
     if ($lb >= 4) {
         $cooldown = max(1, $cooldown - 1);
+    }
+
+    // 専用音動機: スキルの効果量 +○%（ダメージ・回復は倍率、挑発の軽減率・強化/弱体化の効果量は ○% 分上乗せ）
+    $signature = engine_bonus($card)['signature'];
+    if ($signature > 0) {
+        $power = (int)round($power * (1 + $signature / 100));
+        if ($card['skill_effect'] === 'taunt') {
+            $power = min(80, $power);
+        }
     }
 
     return [
@@ -234,7 +355,10 @@ function enrich_user_card(array $card): array
     $card['skill'] = card_skill($card);
     $card['level_cap'] = level_cap((int)$card['evolution'], (int)$card['limit_break']);
     $card['exp_next'] = exp_to_next((int)$card['level']);
-    $card['image_url'] = card_image_url($card['image']);
+    $card['icon_url'] = card_icon_url($card);
+    $card['stand_url'] = card_stand_url($card);
+    $card['image_url'] = $card['stand_url'];
+    $card['engine_bonus'] = engine_bonus($card);
     return $card;
 }
 

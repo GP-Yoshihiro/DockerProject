@@ -13,6 +13,7 @@ const MIN_DAMAGE_RATE = 0.15;       // 防御が高くても、攻撃 × 倍率 
  * バトルに参加するユニット（1人分）を作る
  *
  * $params: name, image, hp, atk, def, spd, attribute, role, level, limit_break, weakness, resistance, skill（null 可）
+ *          dmg_bonus（与ダメージ%）, skill_dmg_bonus（スキルのダメージ%）, heal_bonus（回復量%）… 音動機の効果
  */
 function make_battle_unit(string $uid, string $side, array $params): array
 {
@@ -34,6 +35,10 @@ function make_battle_unit(string $uid, string $side, array $params): array
         'def'         => (int)$params['def'],
         'spd'         => (int)$params['spd'],
         'skill'       => $skill,
+        'dmg_bonus'       => (float)($params['dmg_bonus'] ?? 0),
+        'skill_dmg_bonus' => (float)($params['skill_dmg_bonus'] ?? 0),
+        'heal_bonus'      => (float)($params['heal_bonus'] ?? 0),
+        'engine'          => $params['engine'] ?? null,
         // スキルが使えるまでのターン数。最初はクールタイムの半分から（序盤からスキルが見られるように）
         'cd'          => $skill ? intdiv((int)$skill['cooldown'], 2) : 0,
         'status'      => [], // ['atk_up' => ['value' => 30, 'turns' => 3], 'def_down' => .., 'taunt' => ..]
@@ -155,6 +160,7 @@ function battle_unit_public(array $u): array
         'max_hp'     => $u['max_hp'],
         'hp'         => $u['hp'],
         'skill'      => $u['skill']['name'] ?? null,
+        'engine'     => $u['engine'],
     ];
 }
 
@@ -206,7 +212,7 @@ function battle_act(array &$U, string $uid, array $friends, array $foes, bool $u
         $U[$uid]['cd']--;
     }
     $target = battle_pick_target($U, $uid, $foes);
-    $results = [battle_deal_damage($U, $uid, $target, 100, $use_attribute)];
+    $results = [battle_deal_damage($U, $uid, $target, 100, $use_attribute, false)];
     return ['t' => 'action', 'actor' => $uid, 'kind' => 'attack', 'skill' => null, 'effect' => 'attack', 'results' => $results];
 }
 
@@ -238,12 +244,14 @@ function battle_effective_atk(array $u): float
 /**
  * ダメージを与える。戻り値は結果1件
  */
-function battle_deal_damage(array &$U, string $from, string $to, int $power, bool $use_attribute): array
+function battle_deal_damage(array &$U, string $from, string $to, int $power, bool $use_attribute, bool $is_skill = true): array
 {
     $attacker = $U[$from];
     $target = $U[$to];
 
     $raw = battle_effective_atk($attacker) * $power / 100;
+    // 音動機の効果: 与ダメージ%（属性が合うとき）・スキルのダメージ%
+    $raw *= 1 + ($attacker['dmg_bonus'] + ($is_skill ? $attacker['skill_dmg_bonus'] : 0)) / 100;
     $def = $target['def'] * (1 - ($target['status']['def_down']['value'] ?? 0) / 100);
     $damage = max($raw * MIN_DAMAGE_RATE, $raw - $def * DEFENSE_RATE);
 
@@ -275,7 +283,7 @@ function battle_deal_damage(array &$U, string $from, string $to, int $power, boo
 
 function battle_heal(array &$U, string $from, string $to, int $power): array
 {
-    $amount = (int)round(battle_effective_atk($U[$from]) * $power / 100);
+    $amount = (int)round(battle_effective_atk($U[$from]) * $power / 100 * (1 + $U[$from]['heal_bonus'] / 100));
     $before = $U[$to]['hp'];
     $U[$to]['hp'] = min($U[$to]['max_hp'], $before + $amount);
     return ['target' => $to, 'type' => 'heal', 'amount' => $U[$to]['hp'] - $before, 'hp' => $U[$to]['hp']];

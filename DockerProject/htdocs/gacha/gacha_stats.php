@@ -127,6 +127,6 @@ $total = array_sum(array_column($rows, 'draw_count'));
         </p>
     </form>
 
-    <a href="gacha_form.php">ガチャ画面に戻る</a>
+    <a href="gacha_classic.php">ガチャ画面に戻る</a>
 </body>
 </html>

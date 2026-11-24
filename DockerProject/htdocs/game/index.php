@@ -31,12 +31,14 @@ $recent = fetch_recent_battles($pdo, $user_id);
             <strong>ガチャ</strong>
             <span>ガチャ石でカードを入手</span>
         </a>
-        <a class="home-tile" href="/card/card_list.php"><strong>カード</strong><span>レベルアップ・進化</span></a>
+        <a class="home-tile" href="/card/card_list.php"><strong>キャラ</strong><span>レベルアップ・進化・音動機の装備</span></a>
+        <a class="home-tile" href="/card/engine_list.php"><strong>音動機</strong><span>キャラの装備。レベルアップ・進化</span></a>
         <a class="home-tile" href="/team/team_list.php"><strong>チーム編成</strong><span>3人で出撃</span></a>
         <a class="home-tile" href="items.php"><strong>アイテム</strong><span>所持アイテム</span></a>
         <a class="home-tile" href="shop.php"><strong>ショップ</strong><span>メダルで交換</span></a>
         <a class="home-tile" href="/battle/ranking.php"><strong>ランキング</strong><span>対戦の勝率（1分ごとに更新）</span></a>
         <a class="home-tile tile-debug" href="debug.php"><strong>デバッグ</strong><span>アイテムの付与</span></a>
+        <a class="home-tile tile-debug" href="admin.php"><strong>登録画面</strong><span>キャラ・音動機・ピックアップ</span></a>
     </div>
 
     <h2>チーム</h2>

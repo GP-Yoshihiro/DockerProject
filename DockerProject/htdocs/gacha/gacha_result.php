@@ -6,7 +6,7 @@ $user_id = GAME_USER_ID; // ログイン機能がないため固定
 
 // ガチャはDBを更新する処理なので POST のみ受け付ける（リロードや直リンクで回らないように）
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: gacha_form.php');
+    header('Location: gacha_classic.php');
     exit;
 }
 
@@ -15,7 +15,7 @@ $gacha_id = filter_input(INPUT_POST, 'gacha_id', FILTER_VALIDATE_INT) ?: 1;
 // 引く回数は 単発(1) か 10連 のみ（指定が無いときは 10連）
 $count = filter_input(INPUT_POST, 'count', FILTER_VALIDATE_INT) ?? GACHA_DRAW_COUNT;
 if (!in_array($count, [1, GACHA_DRAW_COUNT], true)) {
-    header('Location: gacha_form.php');
+    header('Location: gacha_classic.php');
     exit;
 }
 $count_label = $count === 1 ? '単発' : "{$count}連";
@@ -79,7 +79,7 @@ if ($error === null) {
 
         <p>引いたカードを所持カードに追加しました（重複したカードは自動で凸）。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
-    <p><a href="gacha_form.php">戻る</a></p>
+    <p><a href="gacha_classic.php">戻る</a></p>
 
     <?php if ($json !== null): ?>
         <section class="json-output">

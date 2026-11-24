@@ -309,3 +309,62 @@ html.js .result-panel.show { display: block; animation: fade-in 0.4s; }
 @media (prefers-reduced-motion: reduce) {
     .unit, .hp-bar span { transition: none; }
 }
+
+/* ===== 音動機 ===== */
+.sig { color: #c97a00; font-weight: bold; }
+.mini-sub.sig { color: #c97a00; }
+.error-text { color: var(--danger); }
+.engine-slot { display: flex; gap: 12px; align-items: center; }
+.engine-slot img { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; background: var(--head); }
+.engine-slot p { margin: 2px 0; }
+.detail-image.engine img { height: 200px; }
+
+/* ===== ピックアップガチャ ===== */
+.banner { overflow: hidden; }
+.banner-char { background: linear-gradient(120deg, #fff 55%, #ffe9f1); }
+.banner-engine { background: linear-gradient(120deg, #fff 55%, #fff4dc); }
+.banner-body { display: flex; flex-wrap: wrap; gap: 20px; }
+.banner-pickup { flex: 0 0 180px; }
+.banner-pickup img { width: 180px; height: 240px; object-fit: contain; }
+.banner-info { flex: 1 1 300px; }
+.banner-info h2 { margin: 0 0 6px; }
+.banner-pu { font-size: 1.05rem; }
+.banner-rates { padding-left: 1.2em; font-size: 0.9rem; color: var(--muted); }
+.pity { margin: 8px 0 12px; }
+.pity-row { display: grid; grid-template-columns: 7em 1fr 7em; align-items: center; gap: 8px; font-size: 0.9rem; }
+.pity-bar { height: 10px; border-radius: 999px; background: var(--head); overflow: hidden; }
+.pity-bar span { display: block; height: 100%; background: linear-gradient(90deg, #ffb300, #ff3d77); }
+.pity-bar.small span { background: linear-gradient(90deg, #8a4dff, #4a63ff); }
+.guaranteed { margin: 6px 0 0; color: #ff3d77; font-weight: bold; }
+.gacha-buttons { justify-content: flex-start; }
+
+/* ===== 登録画面 ===== */
+.admin-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 16px; align-items: end; }
+.admin-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--muted); }
+.admin-form label.check { flex-direction: row; align-items: center; color: var(--text); }
+.admin-form input[type="text"], .admin-form select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; color: var(--text); background: #fff; }
+.admin-form fieldset, .admin-form .form-images, .admin-form > p { grid-column: 1 / -1; }
+.admin-form fieldset { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 16px; border: 1px solid var(--border); border-radius: 10px; }
+.admin-form fieldset p { grid-column: 1 / -1; margin: 0; }
+.form-images { display: flex; gap: 16px; }
+.form-images figure { margin: 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
+.form-images img { width: 120px; height: 150px; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.form-panel { border: 2px solid var(--accent); }
+.file-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px;
+    border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--text); text-decoration: none; font-size: 0.85rem;
+}
+.file-chip:hover { border-color: var(--accent); }
+.file-chip img { width: 32px; height: 32px; object-fit: cover; border-radius: 50%; }
+.admin-table { width: 100%; font-size: 0.9rem; }
+.admin-table img.thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+.admin-table tr.inactive td { opacity: 0.5; }
+.admin-table .actions { white-space: nowrap; }
+.admin-table .actions form { display: inline; }
+.btn-small { padding: 2px 10px; font-size: 0.8rem; }
+@media (max-width: 600px) {
+    .admin-table { display: block; overflow-x: auto; }
+    .banner-pickup, .banner-pickup img { width: 120px; height: 160px; flex-basis: 120px; }
+    .pity-row { grid-template-columns: 6em 1fr 6em; }
+}

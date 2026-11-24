@@ -5,7 +5,8 @@ require_once __DIR__ . '/../../lib/game_lib.php';
 $user_id = GAME_USER_ID;
 $items = fetch_user_items($pdo, $user_id);
 $master = fetch_item_master($pdo);
-$categories = ['currency' => '通貨', 'evolution' => '進化素材', 'exp' => '経験値アイテム'];
+$categories = ['currency' => '通貨', 'evolution' => 'キャラの進化素材', 'exp' => 'キャラの経験値アイテム',
+               'engine_exp' => '音動機の強化アイテム', 'engine_evolution' => '音動機の進化素材'];
 ?>
 <!DOCTYPE html>
 <html lang="ja">

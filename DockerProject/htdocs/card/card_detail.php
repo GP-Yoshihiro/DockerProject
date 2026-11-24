@@ -1,6 +1,6 @@
 <?php
 // カード詳細: ステータス・スキル・凸効果、経験値アイテムの使用、進化
-require_once __DIR__ . '/../../lib/card_growth_lib.php';
+require_once __DIR__ . '/../../lib/engine_lib.php';
 
 $user_id = GAME_USER_ID;
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -23,6 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg .= "レベル上限のため、経験値 {$r['wasted']} は使われませんでした。";
             }
             flash_set('notice', $msg);
+        } elseif ($action === 'equip') {
+            $engine_id = filter_input(INPUT_POST, 'user_engine_id', FILTER_VALIDATE_INT) ?: 0;
+            if ($engine_id) {
+                equip_engine($pdo, $user_id, $engine_id, $id);
+                flash_set('notice', '音動機を装備しました。');
+            } elseif ($card['engine_user_id']) {
+                equip_engine($pdo, $user_id, (int)$card['engine_user_id'], null);
+                flash_set('notice', '音動機を外しました。');
+            }
         } elseif ($action === 'evolve') {
             $r = evolve_card($pdo, $user_id, $id);
             flash_set('notice', "{$r['name']} が進化しました！ レベル上限が {$r['level_cap']} になりました。");
@@ -40,6 +49,8 @@ $exp_items = array_filter($master, fn ($i) => $i['category'] === 'exp');
 $evo = evolution_requirement($card);
 $lb = (int)$card['limit_break'];
 $at_cap = (int)$card['level'] >= $card['level_cap'];
+$engines = fetch_user_engine_list($pdo, $user_id);
+$equipped = $card['engine_user_id'] ? fetch_user_engine($pdo, $user_id, (int)$card['engine_user_id']) : null;
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -53,7 +64,7 @@ $at_cap = (int)$card['level'] >= $card['level_cap'];
 
     <div class="detail">
         <div class="detail-image rarity-<?= (int)$card['rarity'] ?><?= $lb >= MAX_LIMIT_BREAK ? ' maxed' : '' ?>">
-            <img src="<?= htmlspecialchars($card['image_url']) ?>" alt="">
+            <img src="<?= htmlspecialchars($card['stand_url']) ?>" alt="">
         </div>
         <div class="detail-body">
             <p>
@@ -81,8 +92,49 @@ $at_cap = (int)$card['level'] >= $card['level_cap'];
 
             <h2>スキル: <?= htmlspecialchars($card['skill']['name']) ?></h2>
             <p><?= htmlspecialchars(skill_description($card['skill'])) ?></p>
+            <?php if ($card['engine_bonus']['signature'] > 0): ?>
+                <p class="sig">専用音動機の効果で、スキルの効果量 +<?= $card['engine_bonus']['signature'] ?>%（上の数値に反映済み）</p>
+            <?php endif; ?>
         </div>
     </div>
+
+    <section class="panel">
+        <h2>音動機（装備）</h2>
+        <?php if ($equipped): ?>
+            <div class="engine-slot">
+                <img src="<?= htmlspecialchars($equipped['image_url']) ?>" alt="">
+                <div>
+                    <p><span class="rarity-badge rarity-<?= (int)$equipped['rarity'] ?>"><?= rarity_label((int)$equipped['rarity']) ?></span>
+                        <a href="engine_detail.php?id=<?= (int)$equipped['user_engine_id'] ?>"><strong><?= htmlspecialchars($equipped['name']) ?></strong></a>
+                        Lv<?= (int)$equipped['level'] ?> ／ <?= (int)$equipped['limit_break'] ?>凸</p>
+                    <p class="muted">攻撃力 +<?= $equipped['values']['atk'] ?> ／ <?= htmlspecialchars($equipped['sub_text']) ?> ／ <?= htmlspecialchars($equipped['effect_text']) ?>
+                        <?php if ($equipped['effect_type'] === 'attr_dmg' && $equipped['effect_attribute'] !== $card['attribute']): ?>
+                            <span class="error-text">（属性が違うので無効）</span>
+                        <?php endif; ?>
+                    </p>
+                    <?php if ($equipped['signature_text']): ?>
+                        <p class="<?= (int)$equipped['signature_card_id'] === (int)$card['card_id'] ? 'sig' : 'muted' ?>"><?= htmlspecialchars($equipped['signature_text']) ?></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <p class="muted">装備していません。</p>
+        <?php endif; ?>
+        <form method="post" class="inline-form">
+            <input type="hidden" name="id" value="<?= (int)$id ?>">
+            <input type="hidden" name="action" value="equip">
+            <select name="user_engine_id">
+                <option value="">（外す）</option>
+                <?php foreach ($engines as $e): ?>
+                    <option value="<?= (int)$e['user_engine_id'] ?>" <?= (int)$card['engine_user_id'] === (int)$e['user_engine_id'] ? 'selected' : '' ?>>
+                        <?= rarity_label((int)$e['rarity']) ?> <?= htmlspecialchars($e['name']) ?> Lv<?= (int)$e['level'] ?>（<?= htmlspecialchars($e['effect_text']) ?>）<?= (int)$e['signature_card_id'] === (int)$card['card_id'] ? ' ★専用' : '' ?><?= $e['equipped_card_name'] && (int)$e['equipped_user_card_id'] !== (int)$id ? " ※{$e['equipped_card_name']}が装備中" : '' ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit">装備する</button>
+        </form>
+        <p class="muted"><a href="engine_list.php">音動機一覧</a>（レベルアップ・進化は音動機の画面で）</p>
+    </section>
 
     <section class="panel">
         <h2>レベルアップ（経験値アイテム）</h2>

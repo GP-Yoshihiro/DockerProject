@@ -32,10 +32,11 @@ $teams = $stmt->fetchAll();
                     <?php if (isset($members[$pos])): ?>
                         <?php $m = $members[$pos]; ?>
                         <a class="mini-card rarity-<?= (int)$m['rarity'] ?>" href="/card/card_detail.php?id=<?= (int)$m['user_card_id'] ?>">
-                            <img src="<?= htmlspecialchars($m['image_url']) ?>" alt="">
+                            <img src="<?= htmlspecialchars($m['icon_url']) ?>" alt="">
                             <span class="mini-name"><?= htmlspecialchars($m['name']) ?></span>
                             <span class="mini-sub"><?= attribute_badge($m['attribute']) ?> <?= htmlspecialchars(role_label($m['role'])) ?></span>
                             <span class="mini-sub">Lv<?= (int)$m['level'] ?> / 戦力 <?= number_format($m['power']) ?></span>
+                            <?php if ($m['engine_name']): ?><span class="mini-sub">音動機: <?= htmlspecialchars($m['engine_name']) ?></span><?php endif; ?>
                         </a>
                     <?php else: ?>
                         <div class="mini-card empty">（空き）</div>

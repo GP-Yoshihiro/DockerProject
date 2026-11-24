@@ -5,6 +5,11 @@ USE soshage_db;
 -- 接続文字コードを明示
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS banner_histories;
+DROP TABLE IF EXISTS user_gacha_pity;
+DROP TABLE IF EXISTS banners;
+DROP TABLE IF EXISTS user_w_engines;
+DROP TABLE IF EXISTS w_engines;
 DROP TABLE IF EXISTS shop_items;
 DROP TABLE IF EXISTS game_battles;
 DROP TABLE IF EXISTS user_stages;
@@ -39,7 +44,7 @@ CREATE TABLE users (
 --   power:  ダメージ・回復は攻撃力に対する倍率(%)、taunt は軽減率(%)、buff_atk / debuff_def は効果量(%)
 --   cooldown: 何ターンに1回使えるか / duration: 効果が続くターン数（taunt・buff・debuff のみ）
 CREATE TABLE skills (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     effect ENUM('damage_single', 'damage_all', 'heal_single', 'heal_all', 'taunt', 'buff_atk', 'debuff_def') NOT NULL,
     power INT UNSIGNED NOT NULL,
@@ -57,8 +62,10 @@ CREATE TABLE cards (
     def INT DEFAULT 10,
     -- 素早さ: バトルで行動する順番（大きいほど先に動く）
     spd INT NOT NULL DEFAULT 100,
-    -- レア度（星の数）: 5 = 最高レア … 1 = 最低。ガチャ結果の演出（光り方）に使う
-    rarity TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    -- レア度: 5 = S級キャラ / 3 = A級キャラ
+    --   キャラと音動機を合わせた順番（演出の光り方にも使う）:
+    --   5 Sキャラ ＞ 4 S音動機 ＞ 3 Aキャラ ＞ 2 A音動機 ＞ 1 B音動機
+    rarity TINYINT UNSIGNED NOT NULL DEFAULT 3,
     -- 属性（敵の弱点なら与ダメージ1.5倍・耐性なら0.5倍）
     attribute ENUM('ether', 'fire', 'ice', 'physical', 'electric') NOT NULL,
     -- タイプ（凸で伸びるステータスとスキルが変わる）
@@ -71,6 +78,13 @@ CREATE TABLE cards (
     -- 特殊演出（カットイン）用の画像ファイル名。設定したカードを引くと、カードがめくれる前に演出が入る
     -- NULL のカードは演出なし。画像が見つからないときも演出を飛ばしてそのまま進む
     cutin_image VARCHAR(255) DEFAULT NULL,
+    -- アイコン・立ち絵（htdocs/images/ からのパス。例: zzz/icon/xxx.png）。NULL なら image を使う
+    icon_image VARCHAR(255) DEFAULT NULL,
+    stand_image VARCHAR(255) DEFAULT NULL,
+    -- ガチャの排出: standard 常設（すり抜けでも出る）/ limited 限定（ピックアップのときだけ出る）
+    pool ENUM('standard', 'limited') NOT NULL DEFAULT 'standard',
+    -- FALSE にするとガチャから出なくなる（登録画面で切り替え）
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (skill_id) REFERENCES skills(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -79,10 +93,10 @@ CREATE TABLE cards (
 CREATE TABLE items (
     id INT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    category ENUM('currency', 'evolution', 'exp') NOT NULL,
+    category ENUM('currency', 'evolution', 'exp', 'engine_exp', 'engine_evolution') NOT NULL,
     -- 進化素材の属性（そのカードの属性の結晶が必要）
     attribute ENUM('ether', 'fire', 'ice', 'physical', 'electric') DEFAULT NULL,
-    -- 経験値アイテムを使ったときに得られる経験値
+    -- 経験値アイテム（キャラ用 exp / 音動機用 engine_exp）を使ったときに得られる経験値
     exp_value INT UNSIGNED DEFAULT NULL,
     description VARCHAR(255) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -144,17 +158,19 @@ INSERT INTO skills (id, name, effect, power, cooldown, duration) VALUES
 (104, '凍える吐息', 'damage_all', 80, 4, 0);
 
 -- カードマスタデータ（6〜10 は追加キャラ。画像は各自で htdocs/images/cards/ に置く）
+-- S級: マリー・ミカ・アオイ / A級: それ以外
+-- 新しいキャラは「登録画面」（/game/admin.php）から、htdocs/images/zzz/ の画像を選んで登録する
 INSERT INTO cards (id, name, hp, atk, def, spd, rarity, attribute, role, skill_id, image, cutin_image) VALUES
 (1, 'マリー', 810, 192, 72, 112, 5, 'ether', 'attacker', 1, 'mary.png', 'mary01.png'),
-(2, 'ミカ', 702, 168, 63, 114, 4, 'fire', 'attacker', 2, 'mika.png', NULL),
+(2, 'ミカ', 702, 168, 63, 114, 5, 'fire', 'attacker', 2, 'mika.png', NULL),
 (3, 'キサキ', 660, 114, 66, 105, 3, 'ether', 'support', 3, 'kisaki.png', NULL),
-(4, 'ケイ', 504, 120, 45, 112, 2, 'electric', 'attacker', 4, 'kei.png', NULL),
-(5, 'カズサ', 624, 68, 63, 89, 1, 'physical', 'tank', 5, 'kazusa.png', NULL),
-(6, 'アオイ', 858, 119, 70, 95, 4, 'ice', 'healer', 6, 'aoi.png', NULL),
+(4, 'ケイ', 504, 120, 45, 112, 3, 'electric', 'attacker', 4, 'kei.png', NULL),
+(5, 'カズサ', 624, 68, 63, 89, 3, 'physical', 'tank', 5, 'kazusa.png', NULL),
+(6, 'アオイ', 858, 119, 70, 95, 5, 'ice', 'healer', 6, 'aoi.png', NULL),
 (7, 'レン', 594, 144, 54, 112, 3, 'physical', 'attacker', 7, 'ren.png', NULL),
 (8, 'ツバサ', 858, 96, 84, 89, 3, 'electric', 'tank', 8, 'tsubasa.png', NULL),
-(9, 'シオン', 616, 85, 50, 95, 2, 'fire', 'healer', 9, 'shion.png', NULL),
-(10, 'ユズハ', 480, 81, 50, 107, 1, 'ice', 'support', 10, 'yuzuha.png', NULL);
+(9, 'シオン', 616, 85, 50, 95, 3, 'fire', 'healer', 9, 'shion.png', NULL),
+(10, 'ユズハ', 480, 81, 50, 107, 3, 'ice', 'support', 10, 'yuzuha.png', NULL);
 
 -- アイテムマスタデータ
 INSERT INTO items (id, name, category, attribute, exp_value, description) VALUES
@@ -168,7 +184,11 @@ INSERT INTO items (id, name, category, attribute, exp_value, description) VALUES
 (15, '電気の結晶', 'evolution', 'electric', NULL, '電気属性のカードの進化に使う'),
 (21, '経験値ポーション（小）', 'exp', NULL, 100, 'カードに経験値 100'),
 (22, '経験値ポーション（中）', 'exp', NULL, 500, 'カードに経験値 500'),
-(23, '経験値ポーション（大）', 'exp', NULL, 2000, 'カードに経験値 2000');
+(23, '経験値ポーション（大）', 'exp', NULL, 2000, 'カードに経験値 2000'),
+(31, 'チューニングパーツ（小）', 'engine_exp', NULL, 100, '音動機に経験値 100'),
+(32, 'チューニングパーツ（中）', 'engine_exp', NULL, 500, '音動機に経験値 500'),
+(33, 'チューニングパーツ（大）', 'engine_exp', NULL, 2000, '音動機に経験値 2000'),
+(35, 'チューニングコア', 'engine_evolution', NULL, NULL, '音動機の進化に使う');
 
 -- 所持カードデータ（テストユーザーの初期カード・対戦相手のサンプル）
 INSERT INTO user_cards (id, user_id, card_id, level, exp, evolution, limit_break) VALUES
@@ -195,7 +215,8 @@ INSERT INTO user_cards (id, user_id, card_id, level, exp, evolution, limit_break
 INSERT INTO user_items (user_id, item_id, quantity) VALUES
 (1, 1, 3000),
 (1, 2, 1000),
-(1, 21, 5);
+(1, 21, 5),
+(1, 31, 5);
 
 
 -- =========================================================
@@ -604,15 +625,15 @@ INSERT INTO stage_waves (stage_id, wave, position, enemy_id) VALUES
 -- ステージ報酬（item_id: 1 ガチャ石 / 2 ゴールド / 11〜15 結晶 / 21〜23 経験値ポーション）
 INSERT INTO stage_rewards (stage_id, kind, item_id, quantity, probability) VALUES
 (1, 'first', 1, 300, 100), (1, 'first', 2, 1000, 100),
-(1, 'repeat', 2, 300, 100), (1, 'repeat', 14, 1, 50), (1, 'repeat', 21, 1, 50),
+(1, 'repeat', 2, 300, 100), (1, 'repeat', 14, 1, 50), (1, 'repeat', 21, 1, 50), (1, 'repeat', 31, 1, 50),
 (2, 'first', 1, 300, 100), (2, 'first', 2, 1500, 100),
-(2, 'repeat', 2, 400, 100), (2, 'repeat', 12, 1, 100), (2, 'repeat', 13, 1, 50), (2, 'repeat', 21, 1, 50),
+(2, 'repeat', 2, 400, 100), (2, 'repeat', 12, 1, 100), (2, 'repeat', 13, 1, 50), (2, 'repeat', 21, 1, 50), (2, 'repeat', 31, 2, 100), (2, 'repeat', 35, 1, 20),
 (3, 'first', 1, 300, 100), (3, 'first', 2, 2000, 100),
-(3, 'repeat', 2, 600, 100), (3, 'repeat', 15, 2, 100), (3, 'repeat', 14, 1, 50), (3, 'repeat', 22, 1, 30),
+(3, 'repeat', 2, 600, 100), (3, 'repeat', 15, 2, 100), (3, 'repeat', 14, 1, 50), (3, 'repeat', 22, 1, 30), (3, 'repeat', 32, 1, 50), (3, 'repeat', 35, 1, 50),
 (4, 'first', 1, 300, 100), (4, 'first', 2, 3000, 100),
-(4, 'repeat', 2, 800, 100), (4, 'repeat', 13, 2, 100), (4, 'repeat', 11, 1, 100), (4, 'repeat', 15, 1, 50), (4, 'repeat', 22, 1, 50),
+(4, 'repeat', 2, 800, 100), (4, 'repeat', 13, 2, 100), (4, 'repeat', 11, 1, 100), (4, 'repeat', 15, 1, 50), (4, 'repeat', 22, 1, 50), (4, 'repeat', 32, 1, 100), (4, 'repeat', 35, 1, 100),
 (5, 'first', 1, 1000, 100), (5, 'first', 2, 5000, 100),
-(5, 'repeat', 2, 1500, 100), (5, 'repeat', 12, 2, 100), (5, 'repeat', 11, 2, 50), (5, 'repeat', 23, 1, 30);
+(5, 'repeat', 2, 1500, 100), (5, 'repeat', 12, 2, 100), (5, 'repeat', 11, 2, 50), (5, 'repeat', 23, 1, 30), (5, 'repeat', 33, 1, 30), (5, 'repeat', 35, 2, 100);
 
 -- ショップのラインナップ（価格はショップメダル）
 INSERT INTO shop_items (id, item_id, quantity, price) VALUES
@@ -625,4 +646,143 @@ INSERT INTO shop_items (id, item_id, quantity, price) VALUES
 (7, 21, 3, 2),
 (8, 22, 1, 3),
 (9, 23, 1, 10),
-(10, 2, 1000, 2);
+(10, 2, 1000, 2),
+(11, 32, 1, 3),
+(12, 33, 1, 10),
+(13, 35, 1, 5);
+
+
+-- =========================================================
+-- ゲーム: 音動機（キャラの装備）・ピックアップガチャ
+-- =========================================================
+
+-- 音動機マスタ
+--   rarity: 4 = S級 / 2 = A級 / 1 = B級（キャラと合わせた順番: Sキャラ5 ＞ S音動機4 ＞ Aキャラ3 ＞ A音動機2 ＞ B音動機1）
+--   image: htdocs/images/ からのパス（例: zzz/sound engine/A01.png）。NULL・ファイルが無いときは代わりの画像
+--   base_atk: レベル1のときの攻撃力（装備したキャラの攻撃力に足す。レベルで上がる）
+--   sub_stat / sub_value: サブステータス（HP・攻撃・防御のどれかを ○% アップ。進化で上がる）
+--   effect_*: 誰が装備しても効く効果（凸で効果量アップ）
+--     atk_pct 攻撃% / hp_pct HP% / def_pct 防御% / skill_dmg スキルのダメージ% / heal 回復量% / spd 素早さ
+--     attr_dmg 属性汎用: effect_attribute と同じ属性のキャラが装備すると与ダメージ%
+--   signature_card_id / signature_value: 専用効果。そのキャラが装備したときだけ、スキルの効果量 +○%
+--     （ファイル名がキャラ名と同じ音動機は、登録画面で自動的にそのキャラ専用になる）
+CREATE TABLE w_engines (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    rarity TINYINT UNSIGNED NOT NULL,
+    image VARCHAR(255) DEFAULT NULL,
+    base_atk INT UNSIGNED NOT NULL,
+    sub_stat ENUM('hp', 'atk', 'def') NOT NULL,
+    sub_value TINYINT UNSIGNED NOT NULL,
+    effect_type ENUM('atk_pct', 'hp_pct', 'def_pct', 'skill_dmg', 'heal', 'attr_dmg', 'spd') NOT NULL,
+    effect_attribute ENUM('ether', 'fire', 'ice', 'physical', 'electric') DEFAULT NULL,
+    effect_value SMALLINT UNSIGNED NOT NULL,
+    signature_card_id INT DEFAULT NULL,
+    signature_value SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    pool ENUM('standard', 'limited') NOT NULL DEFAULT 'standard',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (signature_card_id) REFERENCES cards(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 所持している音動機（1ユーザーにつき同じ音動機は1つ。重複は自動で凸、最大5凸）
+-- equipped_user_card_id: 装備しているキャラ（所持カード）。1キャラに1つまで
+CREATE TABLE user_w_engines (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    w_engine_id INT NOT NULL,
+    level TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    exp INT UNSIGNED NOT NULL DEFAULT 0,
+    evolution TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    limit_break TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    equipped_user_card_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_user_engine (user_id, w_engine_id),
+    UNIQUE KEY uq_equipped (equipped_user_card_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (w_engine_id) REFERENCES w_engines(id),
+    FOREIGN KEY (equipped_user_card_id) REFERENCES user_cards(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ピックアップガチャ（バナー）
+--   type: char 限定キャラ / engine 限定音動機 / standard 常設
+--   天井のカウントは type ごとに持つので、ピックアップを変えても引き継がれる
+CREATE TABLE banners (
+    id INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    type ENUM('char', 'engine', 'standard') NOT NULL UNIQUE,
+    pickup_card_id INT DEFAULT NULL,
+    pickup_engine_id INT DEFAULT NULL,
+    FOREIGN KEY (pickup_card_id) REFERENCES cards(id),
+    FOREIGN KEY (pickup_engine_id) REFERENCES w_engines(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 天井の状態（ユーザー × ガチャの種類）
+--   s_count: 前回のS級から何回引いたか（天井: 限定キャラ・常設 90 / 限定音動機 80）
+--   a_count: 前回のA級以上から何回引いたか（10回目でA級以上が確定）
+--   guaranteed: すり抜けたので、次のS級はピックアップ確定
+CREATE TABLE user_gacha_pity (
+    user_id INT NOT NULL,
+    pity_type ENUM('char', 'engine', 'standard') NOT NULL,
+    s_count INT UNSIGNED NOT NULL DEFAULT 0,
+    a_count INT UNSIGNED NOT NULL DEFAULT 0,
+    guaranteed BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (user_id, pity_type),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ピックアップガチャの履歴（1回の抽選で1行）
+CREATE TABLE banner_histories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    banner_id INT NOT NULL,
+    kind ENUM('card', 'engine') NOT NULL,
+    item_id INT NOT NULL,
+    tier TINYINT UNSIGNED NOT NULL,
+    is_pickup BOOLEAN NOT NULL DEFAULT FALSE,
+    -- S級が出たときの天井カウント（何連目で出たか）
+    pull_no INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_user_created (user_id, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (banner_id) REFERENCES banners(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 音動機マスタデータ
+--   1〜3: 既存のS級キャラの専用音動機（画像なし）
+--   11〜17: A01〜A07（A01〜A05 は属性汎用、A06 スキル、A07 回復）
+--   21〜36: B01〜B16（B01〜B05 は属性汎用、B06〜 は汎用）
+INSERT INTO w_engines (id, name, rarity, image, base_atk, sub_stat, sub_value, effect_type, effect_attribute, effect_value, signature_card_id, signature_value, pool) VALUES
+(1, '聖光のタクト', 4, NULL, 48, 'atk', 12, 'atk_pct', NULL, 12, 1, 30, 'limited'),
+(2, '紅蓮のギア', 4, NULL, 48, 'atk', 12, 'skill_dmg', NULL, 15, 2, 30, 'standard'),
+(3, '氷雨のオルゴール', 4, NULL, 45, 'hp', 12, 'heal', NULL, 15, 6, 30, 'standard'),
+(11, 'エーテル増幅器', 2, 'zzz/sound engine/A01.png', 40, 'atk', 10, 'attr_dmg', 'ether', 15, NULL, 0, 'standard'),
+(12, '炎熱増幅器', 2, 'zzz/sound engine/A02.png', 40, 'atk', 10, 'attr_dmg', 'fire', 15, NULL, 0, 'standard'),
+(13, '氷結増幅器', 2, 'zzz/sound engine/A03.png', 40, 'atk', 10, 'attr_dmg', 'ice', 15, NULL, 0, 'standard'),
+(14, '衝撃増幅器', 2, 'zzz/sound engine/A04.png', 40, 'atk', 10, 'attr_dmg', 'physical', 15, NULL, 0, 'standard'),
+(15, '雷電増幅器', 2, 'zzz/sound engine/A05.png', 40, 'atk', 10, 'attr_dmg', 'electric', 15, NULL, 0, 'standard'),
+(16, '技巧の音叉', 2, 'zzz/sound engine/A06.png', 40, 'atk', 10, 'skill_dmg', NULL, 15, NULL, 0, 'standard'),
+(17, '慈愛の音叉', 2, 'zzz/sound engine/A07.png', 38, 'hp', 10, 'heal', NULL, 15, NULL, 0, 'standard'),
+(21, 'エーテル共振器', 1, 'zzz/sound engine/B01.png', 32, 'atk', 8, 'attr_dmg', 'ether', 10, NULL, 0, 'standard'),
+(22, '炎熱共振器', 1, 'zzz/sound engine/B02.png', 32, 'atk', 8, 'attr_dmg', 'fire', 10, NULL, 0, 'standard'),
+(23, '氷結共振器', 1, 'zzz/sound engine/B03.png', 32, 'atk', 8, 'attr_dmg', 'ice', 10, NULL, 0, 'standard'),
+(24, '衝撃共振器', 1, 'zzz/sound engine/B04.png', 32, 'atk', 8, 'attr_dmg', 'physical', 10, NULL, 0, 'standard'),
+(25, '雷電共振器', 1, 'zzz/sound engine/B05.png', 32, 'atk', 8, 'attr_dmg', 'electric', 10, NULL, 0, 'standard'),
+(26, '攻撃の歯車', 1, 'zzz/sound engine/B06.png', 32, 'atk', 8, 'atk_pct', NULL, 8, NULL, 0, 'standard'),
+(27, '生命の歯車', 1, 'zzz/sound engine/B07.png', 32, 'hp', 8, 'hp_pct', NULL, 10, NULL, 0, 'standard'),
+(28, '守護の歯車', 1, 'zzz/sound engine/B08.png', 32, 'def', 8, 'def_pct', NULL, 10, NULL, 0, 'standard'),
+(29, '技巧の歯車', 1, 'zzz/sound engine/B09.png', 32, 'atk', 8, 'skill_dmg', NULL, 10, NULL, 0, 'standard'),
+(30, '治癒の歯車', 1, 'zzz/sound engine/B10.png', 32, 'hp', 8, 'heal', NULL, 10, NULL, 0, 'standard'),
+(31, '疾風の歯車', 1, 'zzz/sound engine/B11.png', 32, 'atk', 8, 'spd', NULL, 5, NULL, 0, 'standard'),
+(32, '攻撃のバネ', 1, 'zzz/sound engine/B12.png', 32, 'hp', 8, 'atk_pct', NULL, 6, NULL, 0, 'standard'),
+(33, '生命のバネ', 1, 'zzz/sound engine/B13.png', 32, 'def', 8, 'hp_pct', NULL, 8, NULL, 0, 'standard'),
+(34, '守護のバネ', 1, 'zzz/sound engine/B14.png', 32, 'hp', 8, 'def_pct', NULL, 8, NULL, 0, 'standard'),
+(35, '技巧のバネ', 1, 'zzz/sound engine/B15.png', 32, 'def', 8, 'skill_dmg', NULL, 8, NULL, 0, 'standard'),
+(36, '疾風のバネ', 1, 'zzz/sound engine/B16.png', 32, 'hp', 8, 'spd', NULL, 4, NULL, 0, 'standard');
+
+-- マリーは限定キャラ（ピックアップのときだけ出る）。専用音動機も限定
+UPDATE cards SET pool = 'limited' WHERE id = 1;
+
+INSERT INTO banners (id, name, type, pickup_card_id, pickup_engine_id) VALUES
+(1, 'Sキャラ ピックアップ', 'char', 1, NULL),
+(2, 'モチーフ音動機 ピックアップ', 'engine', NULL, 1),
+(3, '恒常ガチャ', 'standard', NULL, NULL);

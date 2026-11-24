@@ -52,10 +52,11 @@ $teams = fetch_teams_with_power($pdo, $user_id);
             <div class="team-row">
                 <?php foreach ($o['cards'] as $c): ?>
                     <div class="mini-card rarity-<?= (int)$c['rarity'] ?>">
-                        <img src="<?= htmlspecialchars($c['image_url']) ?>" alt="">
+                        <img src="<?= htmlspecialchars($c['icon_url']) ?>" alt="">
                         <span class="mini-name"><?= htmlspecialchars($c['name']) ?></span>
                         <span class="mini-sub"><?= attribute_badge($c['attribute']) ?> <?= htmlspecialchars(role_label($c['role'])) ?></span>
                         <span class="mini-sub">Lv<?= (int)$c['level'] ?> / 戦力 <?= number_format($c['power']) ?></span>
+                        <?php if ($c['engine_name']): ?><span class="mini-sub">音動機: <?= htmlspecialchars($c['engine_name']) ?></span><?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
