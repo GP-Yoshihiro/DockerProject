@@ -1,3 +1,4 @@
 # シェルスクリプトと crontab は Linux コンテナで動かすので、Windows でも改行を LF のままにする
 *.sh text eol=lf
 DockerProject/mng/crontab text eol=lf
+DockerProject/cron/* text eol=lf

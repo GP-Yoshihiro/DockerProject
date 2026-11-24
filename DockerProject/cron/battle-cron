@@ -1,0 +1,4 @@
+# 資料06: 対戦ランキングの自動更新（web コンテナの /etc/cron.d/battle-cron に置かれる）
+# 分 時 日 月 曜日 ユーザー コマンド
+#   「*」は毎分・毎時…、「*/3」と書くと3分ごと
+* * * * * root /usr/local/bin/php /var/www/html/batch/summarize_battles.php >> /var/log/cron.log 2>&1
