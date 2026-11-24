@@ -209,3 +209,28 @@ form.submitting button {
     color: var(--muted);
     font-size: 0.9rem;
 }
+
+/* 資料06: 対戦・対戦ランキング */
+.battle-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: 0 1px 3px rgba(20, 30, 60, 0.08);
+}
+.battle-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+.battle-form > span { padding-bottom: 8px; font-weight: bold; }
+.battle-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ranking td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ranking .rank-1 td:first-child { color: #c99700; font-weight: bold; }
+.ranking .rank-2 td:first-child { color: #8a94a6; font-weight: bold; }
+.ranking .rank-3 td:first-child { color: #b0703a; font-weight: bold; }

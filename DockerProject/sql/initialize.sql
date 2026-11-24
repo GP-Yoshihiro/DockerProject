@@ -5,6 +5,8 @@ USE soshage_db;
 -- 接続文字コードを明示
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS battle_rankings;
+DROP TABLE IF EXISTS battle_histories;
 DROP TABLE IF EXISTS user_team_members;
 DROP TABLE IF EXISTS user_teams;
 DROP TABLE IF EXISTS user_box_items;
@@ -54,7 +56,12 @@ CREATE TABLE user_cards (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- サンプルデータ
-INSERT INTO users (id, name) VALUES (1, 'テストユーザー');
+INSERT INTO users (id, name) VALUES
+(1, 'テストユーザー'),
+-- 資料06: 対戦ランキング用のユーザー
+(2, 'takahasi'),
+(3, 'yamada'),
+(4, 'azuma');
 
 -- マスタデータ
 INSERT INTO cards (id, name, next_card_id, hp, atk, def, rarity, image, cutin_image) VALUES 
@@ -202,3 +209,97 @@ INSERT INTO user_teams (id, user_id, name) VALUES
 (1, 1, 'チーム1'),
 (2, 1, 'チーム2'),
 (3, 1, 'チーム3');
+
+
+-- =========================================================
+-- 資料06: 対戦履歴・対戦ランキング
+-- =========================================================
+
+-- 対戦履歴（1回のバトルで1行）
+-- winner_user_id: 勝ったユーザー。NULL なら引き分け
+CREATE TABLE battle_histories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    player1_user_id INT NOT NULL,
+    player2_user_id INT NOT NULL,
+    winner_user_id INT DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- 集計で「あるユーザーが参加したバトル」を探す用
+    INDEX idx_player1 (player1_user_id),
+    INDEX idx_player2 (player2_user_id),
+    FOREIGN KEY (player1_user_id) REFERENCES users(id),
+    FOREIGN KEY (player2_user_id) REFERENCES users(id),
+    FOREIGN KEY (winner_user_id) REFERENCES users(id),
+    -- 自分自身とは対戦しない／勝者は対戦した2人のどちらか
+    CHECK (player1_user_id <> player2_user_id),
+    CHECK (winner_user_id IS NULL OR winner_user_id IN (player1_user_id, player2_user_id))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 対戦ランキング（集計結果）
+-- crontab から1分ごとに実行される htdocs/batch/summarize_battles.php が作り直す。
+-- 画面（battle/ranking.php）はこの表を読むだけなので、対戦履歴が増えても表示は重くならない
+CREATE TABLE battle_rankings (
+    user_id INT PRIMARY KEY,
+    rank_no INT UNSIGNED NOT NULL,
+    wins INT UNSIGNED NOT NULL,
+    losses INT UNSIGNED NOT NULL,
+    draws INT UNSIGNED NOT NULL,
+    -- 勝率(%) = 勝ち / (勝ち + 負け + 引き分け) × 100（小数第2位まで）
+    win_rate DECIMAL(5, 2) NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_rank (rank_no),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- サンプルの対戦履歴（集計すると資料の例と同じ成績になる）
+--   takahasi: 12勝 0敗 3分 → 80.00%
+--   yamada:    8勝13敗10分 → 25.81%
+--   azuma:     9勝16敗13分 → 23.68%
+INSERT INTO battle_histories (player1_user_id, player2_user_id, winner_user_id) VALUES
+-- takahasi vs yamada: takahasi の勝ち × 4
+(2, 3, 2),
+(2, 3, 2),
+(2, 3, 2),
+(2, 3, 2),
+-- takahasi vs azuma: takahasi の勝ち × 8
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+(2, 4, 2),
+-- takahasi vs azuma: 引き分け × 3
+(2, 4, NULL),
+(2, 4, NULL),
+(2, 4, NULL),
+-- yamada vs azuma: yamada の勝ち × 8
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+(3, 4, 3),
+-- yamada vs azuma: azuma の勝ち × 9
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+(3, 4, 4),
+-- yamada vs azuma: 引き分け × 10
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL),
+(3, 4, NULL);
