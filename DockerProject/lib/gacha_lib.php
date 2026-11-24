@@ -1,14 +1,24 @@
 <?php
 // ガチャの共通処理（htdocs/gacha/ と htdocs/box_gacha/ の画面から使う）
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/card_lib.php';
+require_once __DIR__ . '/card_growth_lib.php';
 
 date_default_timezone_set('Asia/Tokyo');
 
 const GACHA_DRAW_COUNT = 10; // 10連
 
+/** ガチャ1回あたりのガチャ石（10連は 300 × 10 = 3000） */
+const GACHA_STONE_COST = 300;
+
 /** 画面にそのまま表示してよいガチャのエラー（期間外など） */
-class GachaException extends Exception {}
+class GachaException extends GameException {}
+
+/**
+ * $count 回引くのに必要なガチャ石
+ */
+function gacha_cost(int $count): int
+{
+    return GACHA_STONE_COST * $count;
+}
 
 /**
  * ログ出力
@@ -90,9 +100,11 @@ function draw_one(array $items): array
  * 抽選結果を保存する（呼び出し側でトランザクションを開始しておくこと）
  *   - gacha_histories: ガチャの履歴
  *   - user_cards:      プレイヤーの所持カード（$grant_cards = true のとき）
+ *                      持っていないカードは追加、持っていれば自動で凸、完凸ならショップメダルに変換
+ *                      どうなったかを $results の各要素の 'grant' に入れる
  * 戻り値は 1回の実行（10連など）を識別する draw_id
  */
-function save_draw_results(PDO $pdo, int $user_id, int $gacha_id, array $results, string $now, bool $grant_cards = true): string
+function save_draw_results(PDO $pdo, int $user_id, int $gacha_id, array &$results, string $now, bool $grant_cards = true): string
 {
     $draw_id = bin2hex(random_bytes(16));
 
@@ -100,14 +112,14 @@ function save_draw_results(PDO $pdo, int $user_id, int $gacha_id, array $results
         INSERT INTO gacha_histories (draw_id, user_id, gacha_id, card_id, created_at)
         VALUES (?, ?, ?, ?, ?)
     ");
-    $card = $pdo->prepare("INSERT INTO user_cards (user_id, card_id, created_at) VALUES (?, ?, ?)");
 
-    foreach ($results as $item) {
+    foreach ($results as &$item) {
         $history->execute([$draw_id, $user_id, $gacha_id, $item['card_id'], $now]);
         if ($grant_cards) {
-            $card->execute([$user_id, $item['card_id'], $now]);
+            $item['grant'] = grant_card($pdo, $user_id, (int)$item['card_id'], (int)$item['rarity']);
         }
     }
+    unset($item);
     return $draw_id;
 }
 
@@ -131,8 +143,9 @@ function require_open_gacha(PDO $pdo, int $user_id, int $gacha_id, string $type,
 
 /**
  * 通常ガチャを $count 回引いて履歴と所持カードを保存し、結果（当選アイテムの配列）を返す
+ * ガチャ石を $count × 300 消費する（足りなければ GameException）
  *
- * $grant_cards = false にすると履歴だけ保存する（排出率を調べるための大量試行用）
+ * $grant_cards = false にすると履歴だけ保存する（排出率を調べるための大量試行用。ガチャ石は使わない）
  */
 function execute_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count = GACHA_DRAW_COUNT, bool $grant_cards = true): array
 {
@@ -151,11 +164,17 @@ function execute_gacha(PDO $pdo, int $user_id, int $gacha_id, int $count = GACHA
 
     $pdo->beginTransaction();
     try {
+        if ($grant_cards) {
+            lock_user($pdo, $user_id);
+            consume_item($pdo, $user_id, ITEM_STONE, gacha_cost($count));
+        }
         $draw_id = save_draw_results($pdo, $user_id, $gacha_id, $results, $now, $grant_cards);
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
-        gacha_log('履歴の保存に失敗', ['user_id' => $user_id, 'gacha_id' => $gacha_id, 'error' => $e->getMessage()]);
+        if (!$e instanceof GameException) {
+            gacha_log('履歴の保存に失敗', ['user_id' => $user_id, 'gacha_id' => $gacha_id, 'error' => $e->getMessage()]);
+        }
         throw $e;
     }
 

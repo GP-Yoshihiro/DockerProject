@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/box_gacha_lib.php';
 
-$user_id = 1;
+$user_id = GAME_USER_ID;
 
 $message = null;
 
@@ -29,11 +29,14 @@ $total = array_sum(array_column($box, 'initial'));
     <meta charset="UTF-8">
     <title>ボックスガチャ</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/game.css">
     <link rel="stylesheet" href="/css/card.css">
 </head>
 <body>
+    <?php render_game_header($pdo, $user_id); ?>
     <h1>ボックスガチャ</h1>
-    <p>当たったアイテムは箱から減っていきます。箱を引き切ると、中身がすべて手に入ります。</p>
+    <p>当たったアイテムは箱から減っていきます。箱を引き切ると、中身がすべて手に入ります。ガチャ石は通常ガチャと同じです（1回 <?= number_format(gacha_cost(1)) ?>）。</p>
+    <?php $stones = get_item_quantity($pdo, $user_id, ITEM_STONE); ?>
 
     <?php if ($message !== null): ?>
         <p class="notice"><?= htmlspecialchars($message) ?></p>
@@ -59,8 +62,8 @@ $total = array_sum(array_column($box, 'initial'));
 
     <form action="box_gacha_result.php" method="post">
         <p>
-            <button type="submit" name="count" value="1" <?= $left < 1 ? 'disabled' : '' ?>>1回引く</button>
-            <button type="submit" name="count" value="<?= GACHA_DRAW_COUNT ?>" <?= $left < GACHA_DRAW_COUNT ? 'disabled' : '' ?>>10連ガチャ実行</button>
+            <button type="submit" name="count" value="1" <?= $left < 1 || $stones < gacha_cost(1) ? 'disabled' : '' ?>>1回引く（石 <?= number_format(gacha_cost(1)) ?>）</button>
+            <button type="submit" name="count" value="<?= GACHA_DRAW_COUNT ?>" <?= $left < GACHA_DRAW_COUNT || $stones < gacha_cost(GACHA_DRAW_COUNT) ? 'disabled' : '' ?>>10連ガチャ実行（石 <?= number_format(gacha_cost(GACHA_DRAW_COUNT)) ?>）</button>
         </p>
     </form>
 

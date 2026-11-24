@@ -445,3 +445,17 @@ html:not(.js) .summon,
 @media (prefers-reduced-motion: reduce) {
     .card-flip, .revealed .card-flip, .rarity-5 .card-front, .summon-orb { animation: none; transition: none; }
 }
+
+/* ゲーム: ガチャで引いたカードがどうなったか（NEW / 凸 / メダルに変換） */
+.grant-badge {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    line-height: 1.6;
+}
+.grant-new { background: #ff3d77; color: #fff; }
+.grant-limit_break { background: #ffd34d; color: #5a3d00; }
+.grant-medal { background: #8a94a6; color: #fff; }

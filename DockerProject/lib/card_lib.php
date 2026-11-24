@@ -9,11 +9,25 @@ const CARD_NO_IMAGE  = 'no_image.svg';          // 画像が登録されてい�
  */
 function card_image_url(?string $image): string
 {
+    return image_url_or_fallback(CARD_IMAGE_DIR, $image);
+}
+
+/**
+ * 画像フォルダとファイル名から URL を作る。ファイルが無いときは代わりの画像（no_image.svg）にする
+ * （追加キャラや敵の画像は各自で用意するので、置いていなくても画面が崩れないように）
+ */
+function image_url_or_fallback(string $dir, ?string $image): string
+{
     // DBの値をそのままパスに使うので、フォルダをまたぐ指定（../ など）は受け付けない
     if ($image === null || $image === '' || basename($image) !== $image) {
-        $image = CARD_NO_IMAGE;
+        return CARD_IMAGE_DIR . CARD_NO_IMAGE;
     }
-    return CARD_IMAGE_DIR . rawurlencode($image);
+    // Web サーバから実行されているときは、ファイルがあるかを確認する
+    $docroot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+    if ($docroot !== '' && !is_file($docroot . $dir . $image)) {
+        return CARD_IMAGE_DIR . CARD_NO_IMAGE;
+    }
+    return $dir . rawurlencode($image);
 }
 
 const RARITY_LABELS = [5 => 'UR', 4 => 'SSR', 3 => 'SR', 2 => 'R', 1 => 'N'];
@@ -76,6 +90,16 @@ function render_card_results(array $results): void
                 <figcaption>
                     <span class="rarity-badge rarity-<?= $rarity ?>"><?= rarity_label($rarity) ?></span>
                     <span class="card-name"><?= htmlspecialchars($item['name']) ?></span>
+                    <?php $grant = $item['grant'] ?? null; ?>
+                    <?php if ($grant !== null): ?>
+                        <!-- 持っていないカードは NEW、持っていれば自動で凸、完凸ならショップメダルに変換 -->
+                        <span class="grant-badge grant-<?= htmlspecialchars($grant['type']) ?>"><?= htmlspecialchars(match ($grant['type']) {
+                            'new' => 'NEW',
+                            'limit_break' => "{$grant['limit_break']}凸",
+                            'medal' => "メダル+{$grant['medals']}",
+                            default => '',
+                        }) ?></span>
+                    <?php endif; ?>
                 </figcaption>
             </figure>
         <?php endforeach; ?>

@@ -1,27 +1,18 @@
 <?php
 // 所持カード・チーム編成の共通処理（htdocs/card/ と htdocs/team/ の画面から使う）
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/card_lib.php';
+require_once __DIR__ . '/card_growth_lib.php';
 
 const TEAM_SIZE = 3; // 1チームの枠の数
 
 /** 画面にそのまま表示してよいチーム編成のエラー */
-class TeamException extends Exception {}
+class TeamException extends GameException {}
 
 /**
- * ユーザーの所持カード（1枚ずつ）を新しい順に取得する
+ * ユーザーの所持カード（レベル・ステータス計算済み）
  */
 function fetch_user_cards(PDO $pdo, int $user_id): array
 {
-    $stmt = $pdo->prepare("
-        SELECT uc.id, uc.card_id, c.name, c.rarity, c.image, c.hp, c.atk, c.def, uc.created_at
-        FROM user_cards uc
-        JOIN cards c ON c.id = uc.card_id
-        WHERE uc.user_id = ?
-        ORDER BY uc.card_id, uc.id DESC
-    ");
-    $stmt->execute([$user_id]);
-    return $stmt->fetchAll();
+    return fetch_user_card_list($pdo, $user_id);
 }
 
 /**
@@ -35,23 +26,24 @@ function find_user_team(PDO $pdo, int $user_id, int $team_id): ?array
 }
 
 /**
- * チームのメンバーを [position => カード情報] の形で取得する
+ * チームのメンバーを [position => カード情報（レベル・ステータス計算済み）] の形で取得する
  */
 function fetch_team_members(PDO $pdo, int $team_id): array
 {
-    $stmt = $pdo->prepare("
-        SELECT tm.position, uc.id AS user_card_id, c.name, c.rarity, c.image, c.hp, c.atk, c.def
-        FROM user_team_members tm
-        JOIN user_cards uc ON uc.id = tm.user_card_id
-        JOIN cards c ON c.id = uc.card_id
+    $stmt = $pdo->prepare(USER_CARD_SELECT . "
+        JOIN user_team_members tm ON tm.user_card_id = uc.id
         WHERE tm.team_id = ?
         ORDER BY tm.position
     ");
     $stmt->execute([$team_id]);
     $members = [];
+    $positions = $pdo->prepare("SELECT position, user_card_id FROM user_team_members WHERE team_id = ?");
+    $positions->execute([$team_id]);
+    $by_card = array_column($positions->fetchAll(), 'position', 'user_card_id');
     foreach ($stmt->fetchAll() as $row) {
-        $members[(int)$row['position']] = $row;
+        $members[(int)$by_card[$row['user_card_id']]] = enrich_user_card($row);
     }
+    ksort($members);
     return $members;
 }
 

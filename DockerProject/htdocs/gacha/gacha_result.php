@@ -2,11 +2,11 @@
 require_once __DIR__ . '/../../lib/gacha_lib.php';
 require_once __DIR__ . '/../../lib/gacha_export_lib.php';
 
-$user_id = 1; // ログイン機能がないため固定（forge_*.php と同じ）
+$user_id = GAME_USER_ID; // ログイン機能がないため固定
 
 // ガチャはDBを更新する処理なので POST のみ受け付ける（リロードや直リンクで回らないように）
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: gacha_form.html');
+    header('Location: gacha_form.php');
     exit;
 }
 
@@ -15,7 +15,7 @@ $gacha_id = filter_input(INPUT_POST, 'gacha_id', FILTER_VALIDATE_INT) ?: 1;
 // 引く回数は 単発(1) か 10連 のみ（指定が無いときは 10連）
 $count = filter_input(INPUT_POST, 'count', FILTER_VALIDATE_INT) ?? GACHA_DRAW_COUNT;
 if (!in_array($count, [1, GACHA_DRAW_COUNT], true)) {
-    header('Location: gacha_form.html');
+    header('Location: gacha_form.php');
     exit;
 }
 $count_label = $count === 1 ? '単発' : "{$count}連";
@@ -24,8 +24,8 @@ $error = null;
 $results = [];
 try {
     $results = execute_gacha($pdo, $user_id, $gacha_id, $count);
-} catch (GachaException $e) {
-    // 期間外など、ユーザーに見せてよいエラー
+} catch (GameException $e) {
+    // 期間外・ガチャ石が足りないなど、ユーザーに見せてよいエラー
     $error = $e->getMessage();
 } catch (Throwable $e) {
     gacha_log('予期しないエラー', ['error' => $e->getMessage()]);
@@ -56,10 +56,12 @@ if ($error === null) {
     <meta charset="UTF-8">
     <title>ガチャ結果（<?= htmlspecialchars($count_label) ?>）</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/game.css">
     <link rel="stylesheet" href="/css/card.css">
     <?php render_reveal_head(); ?>
 </head>
 <body>
+    <?php render_game_header($pdo, $user_id); ?>
     <?php if ($error !== null): ?>
         <h1>ガチャ結果</h1>
         <p class="error"><?= htmlspecialchars($error) ?></p>
@@ -70,13 +72,14 @@ if ($error === null) {
         <!-- 同じガチャをもう一度引く -->
         <form class="retry" action="gacha_result.php" method="post">
             <input type="hidden" name="gacha_id" value="<?= htmlspecialchars($gacha_id) ?>">
-            <button type="submit" name="count" value="1" class="btn-retry">もう1回（単発）</button>
-            <button type="submit" name="count" value="<?= GACHA_DRAW_COUNT ?>" class="btn-retry btn-retry-main">もう<?= GACHA_DRAW_COUNT ?>連</button>
+            <?php $stones = get_item_quantity($pdo, $user_id, ITEM_STONE); ?>
+            <button type="submit" name="count" value="1" class="btn-retry" <?= $stones < gacha_cost(1) ? 'disabled' : '' ?>>もう1回（単発・石 <?= number_format(gacha_cost(1)) ?>）</button>
+            <button type="submit" name="count" value="<?= GACHA_DRAW_COUNT ?>" class="btn-retry btn-retry-main" <?= $stones < gacha_cost(GACHA_DRAW_COUNT) ? 'disabled' : '' ?>>もう<?= GACHA_DRAW_COUNT ?>連（石 <?= number_format(gacha_cost(GACHA_DRAW_COUNT)) ?>）</button>
         </form>
 
-        <p>引いたカードを所持カードに追加しました。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
+        <p>引いたカードを所持カードに追加しました（重複したカードは自動で凸）。（<a href="../card/card_list.php">所持カード一覧</a>）</p>
     <?php endif; ?>
-    <p><a href="gacha_form.html">戻る</a></p>
+    <p><a href="gacha_form.php">戻る</a></p>
 
     <?php if ($json !== null): ?>
         <section class="json-output">

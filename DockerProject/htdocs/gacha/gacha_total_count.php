@@ -49,6 +49,6 @@ $total = array_sum(array_column($rows, 'count'));
         </table>
     <?php endif; ?>
 
-    <p><a href="gacha_form.html">戻る</a></p>
+    <p><a href="gacha_form.php">戻る</a></p>
 </body>
 </html>
