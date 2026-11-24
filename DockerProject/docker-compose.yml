@@ -9,8 +9,16 @@ services:
       - ./htdocs:/var/www/html
       # 共通処理（DB接続など）。公開フォルダの外に置き、ブラウザから直接見えないようにする
       - ./lib:/var/www/lib
+      # 資料05: ガチャ結果の出力先（JSON / CSV）。公開フォルダの外に置く
+      - ./output:/var/www/output
     depends_on:
       - mysql
+  # 資料05 応用: 管理用コンテナ。cron で output のファイルを storage へ移動する
+  mng:
+    build: ./mng
+    volumes:
+      - ./output:/var/www/output
+      - ./storage:/storage
   mysql:
     image: mysql:8.0
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci # ← 追加
